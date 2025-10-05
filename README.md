@@ -48,6 +48,12 @@ Simply walk up to a kiosk, ask "Where can I find organic almond milk?" and get b
 
 *Click the thumbnail above to watch our StorePal demo video!*
 
+## 🗺️ UI Example
+### Home Page Kiosk
+<img width="1699" height="981" alt="home_page" src="https://github.com/user-attachments/assets/b5119b94-9769-40f2-80df-f178acfededd" />
+### Map Page Kiosk
+<img width="1698" height="977" alt="map_page" src="https://github.com/user-attachments/assets/9a78d8d4-77fe-4631-9a9b-d994ecb54e7e" />
+
 ## ✨ Features
 
 ### 🎤 Voice & Conversation
