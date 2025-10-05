@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import StoreMap from './StoreMap';
 import Dashboard from './Dashboard';
@@ -48,7 +48,6 @@ function App() {
       console.log('✅ Connected to server');
       setIsConnected(true);
       setConnectionStatus('connected');
-      addSystemMessage('Connected to StorePal AI');
       
       if (!playbackContextRef.current) {
         playbackContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
@@ -71,15 +70,18 @@ function App() {
     ws.onerror = (error) => {
       console.error('❌ WebSocket error:', error);
       setConnectionStatus('error');
-      addSystemMessage('Connection error occurred');
     };
     
     ws.onclose = () => {
       console.log('🔌 Disconnected from server');
       setIsConnected(false);
       setConnectionStatus('disconnected');
-      addSystemMessage('Disconnected from server');
       stopRecording();
+      // Clear conversation history on disconnect
+      setTranscripts(prev => [...prev, { speaker: 'system', text: 'Conversation history cleared.', timestamp: new Date() }]);
+      setShowMap(false);
+      setPendingAisles([]);
+      setUserFinishedSpeaking(false);
     };
     
     wsRef.current = ws;
@@ -92,7 +94,6 @@ function App() {
       case 'conversation_initiation_metadata':
         const convId = data.conversation_initiation_metadata_event?.conversation_id;
         console.log('🎉 Conversation started:', convId);
-        addSystemMessage(`Conversation started: ${convId?.substring(0, 8)}...`);
         break;
         
       case 'user_transcript':
@@ -121,6 +122,7 @@ function App() {
         if (agentText) {
           addTranscript('agent', agentText);
           // Check if agent mentioned an aisle and show map
+          console.log('🔍 About to check for aisle mention in:', agentText);
           checkForAisleMention(agentText);
         }
         break;
@@ -190,9 +192,6 @@ function App() {
     });
   };
 
-  const addSystemMessage = (text) => {
-    setTranscripts(prev => [...prev, { speaker: 'system', text, timestamp: new Date() }]);
-  };
 
   const cleanTranscriptText = (text) => {
     // Remove tool_code blocks and other unwanted content
@@ -204,6 +203,7 @@ function App() {
   };
 
   const checkForAisleMention = (text) => {
+    console.log('🔍 checkForAisleMention called with:', text);
     console.log('🔍 Raw text received:', text);
     // Clean the text first to remove any unwanted content
     const cleanText = cleanTranscriptText(text);
@@ -214,30 +214,41 @@ function App() {
     const aislePattern = /\b([A-Z]\d{1,2})\b/g;
     const wordPattern = /\b([A-Z])\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen)\b/gi;
     const aisleWordPattern = /[Aa]isle\s+([A-Z])\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen)/gi;
-    const flexibleAislePattern = /(?:in\s+)?[Aa]isle\s+([A-Z])\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen)/gi;
+    const aisleNumberPattern = /[Aa]isle\s+([A-Z])\s*(\d{1,2})/gi;
     
     const matches = cleanText.match(aislePattern);
     const wordMatches = cleanText.match(wordPattern);
     const aisleWordMatches = cleanText.match(aisleWordPattern);
-    const flexibleMatches = cleanText.match(flexibleAislePattern);
+    const aisleNumberMatches = cleanText.match(aisleNumberPattern);
     
     console.log('🔍 Checking text for aisles:', cleanText);
     console.log('🔍 Pattern matches:', matches);
     console.log('🔍 Word pattern matches:', wordMatches);
     console.log('🔍 Aisle word pattern matches:', aisleWordMatches);
-    console.log('🔍 Flexible pattern matches:', flexibleMatches);
-    
-    // Debug: Test the patterns manually
-    const testText = "Aisle J four, Aisle G six, Aisle H six";
-    const testMatches = testText.match(aisleWordPattern);
-    console.log('🧪 Test pattern with sample text:', testText);
-    console.log('🧪 Test matches:', testMatches);
+    console.log('🔍 Aisle number pattern matches:', aisleNumberMatches);
     
     // Debug: Test with the actual agent response format
     const agentText = "Oatmeal Quick Oats, which are quick cooking oats in a canister, can be found in Aisle J four. We also have Oatmeal Old Fashioned, which are old fashioned rolled oats, also in Aisle J four. For Steel Cut Oats, which are Irish steel cut oats, you'll find them in Aisle G six. Lastly, Granola Bars Oats Honey, which are chewy oats and honey bars in a ten count pack, are located in Aisle H six.";
     const agentMatches = agentText.match(aisleWordPattern);
     console.log('🧪 Agent text test:', agentText);
     console.log('🧪 Agent matches:', agentMatches);
+    
+    // Test the conversion logic
+    if (agentMatches) {
+      const testConverted = agentMatches.map(match => {
+        const parts = match.split(' ');
+        const letter = parts[1];
+        const word = parts[2];
+        const wordToNum = {
+          'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
+          'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10',
+          'eleven': '11', 'twelve': '12', 'thirteen': '13', 'fourteen': '14',
+          'fifteen': '15', 'sixteen': '16', 'seventeen': '17'
+        };
+        return letter.toUpperCase() + wordToNum[word.toLowerCase()];
+      });
+      console.log('🧪 Test conversion result:', testConverted);
+    }
     
     let allMatches = [];
     if (matches) allMatches = [...allMatches, ...matches];
@@ -271,22 +282,19 @@ function App() {
       });
       allMatches = [...allMatches, ...converted];
     }
-    if (flexibleMatches) {
-      // Convert flexible format to letter format
-      const converted = flexibleMatches.map(match => {
-        const parts = match.split(' ');
+    if (aisleNumberMatches) {
+      // Convert "Aisle J4" format to "J4"
+      const converted = aisleNumberMatches.map(match => {
+        const parts = match.split(/\s+/);
         const letter = parts[1]; // J
-        const word = parts[2]; // four
-        const wordToNum = {
-          'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
-          'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10',
-          'eleven': '11', 'twelve': '12', 'thirteen': '13', 'fourteen': '14',
-          'fifteen': '15', 'sixteen': '16', 'seventeen': '17'
-        };
-        return letter.toUpperCase() + wordToNum[word.toLowerCase()];
+        const number = parts[2]; // 4
+        return letter.toUpperCase() + number;
       });
       allMatches = [...allMatches, ...converted];
     }
+    
+    // Remove duplicates
+    allMatches = [...new Set(allMatches)];
     
     if (allMatches.length > 0) {
       console.log('🗺️ Aisle mentioned:', allMatches);
@@ -297,18 +305,22 @@ function App() {
       
       // Don't hide the map immediately when agent mentions aisles
       // The map should stay visible to show the pins
+    } else {
+      console.log('🗺️ No aisle matches found in text');
     }
   };
 
-  const handleMapControls = (controls) => {
+  const handleMapControls = useCallback((controls) => {
     setMapControls(controls);
-  };
+  }, []);
 
   // Handle pending aisles when map controls are available
   useEffect(() => {
     if (mapControls && pendingAisles.length > 0) {
       console.log('🗺️ Adding pins for pending aisles:', pendingAisles);
+      console.log('🗺️ Map controls available:', !!mapControls);
       pendingAisles.forEach(aisle => {
+        console.log('🗺️ Adding pin for aisle:', aisle);
         mapControls.addPin(aisle, '#ef4444'); // Red pin for store locations (mentioned aisles)
       });
       setPendingAisles([]); // Clear pending aisles
@@ -322,7 +334,6 @@ function App() {
       setTimeout(() => {
         setShowMap(false);
         setPendingAisles([]); // Clear any pending aisles
-        addSystemMessage('🗺️ Map minimized - will show again if you ask about store locations');
       }, 500); // Give a bit more time for the user to see their question was processed
     }
   }, [userFinishedSpeaking, showMap, pendingAisles]);
@@ -486,7 +497,6 @@ function App() {
       
       mediaRecorderRef.current = { processor, source, stream };
       setIsRecording(true);
-      addSystemMessage('🎤 Microphone active - Start speaking');
       console.log('🎙️ Recording started, sending audio chunks...');
     } catch (error) {
       console.error('❌ Error accessing microphone:', error);
@@ -519,12 +529,16 @@ function App() {
     if (wsRef.current) {
       wsRef.current.close();
     }
+    // Clear conversation history and reset state
+    setTranscripts([{ speaker: 'system', text: 'Conversation ended. History cleared.', timestamp: new Date() }]);
+    setShowMap(false);
+    setPendingAisles([]);
+    setUserFinishedSpeaking(false);
   };
 
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
-      addSystemMessage('Microphone stopped');
     } else {
       startRecording();
     }

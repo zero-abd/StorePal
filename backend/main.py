@@ -70,8 +70,12 @@ class ElevenLabsAgent:
     async def connect_to_elevenlabs(self):
         uri = f"wss://api.elevenlabs.io/v1/convai/conversation?agent_id={AGENT_ID}"
         headers = {"xi-api-key": ELEVENLABS_API_KEY}
-        self.elevenlabs_ws = await websockets.connect(uri, extra_headers=headers)
-        print("✅ Connected to ElevenLabs API")
+        try:
+            self.elevenlabs_ws = await websockets.connect(uri, extra_headers=headers)
+            print("✅ Connected to ElevenLabs API")
+        except Exception as e:
+            print(f"❌ Failed to connect to ElevenLabs: {e}")
+            raise
     
     def should_search_products(self, query: str) -> bool:
         """
@@ -91,7 +95,13 @@ class ElevenLabsAgent:
             "find", "where", "locate", "aisle", "product", "item",
             "have", "sell", "carry", "stock", "available",
             "need", "want", "looking for", "search",
-            "show me", "get me", "buy", "purchase"
+            "show me", "get me", "buy", "purchase",
+            "recommend", "suggest", "healthy", "breakfast",
+            "lunch", "dinner", "snack", "drink", "food",
+            "cereal", "milk", "bread", "fruit", "vegetable",
+            "meat", "chicken", "beef", "fish", "dairy",
+            "frozen", "canned", "fresh", "organic",
+            "something", "options", "choices", "what", "do you have"
         ]
         
         query_lower = query.lower()
@@ -111,16 +121,40 @@ class ElevenLabsAgent:
             return "I'm sorry, product search is not available at the moment."
         
         try:
-            # Perform search with reranking for best results
-            results = self.vector_search.search_with_reranking(
-                query=query,
-                top_k=20,
-                top_n=5
-            )
+            # Try multiple search variations for better results
+            search_queries = [query]
+            
+            # Add variations for common queries
+            if "healthy" in query.lower():
+                search_queries.extend(["healthy food", "organic", "fresh", "natural"])
+            if "breakfast" in query.lower():
+                search_queries.extend(["cereal", "oatmeal", "yogurt", "eggs", "bread"])
+            if "recommend" in query.lower() or "suggest" in query.lower():
+                search_queries.extend(["popular", "best", "top"])
+            
+            all_results = []
+            for search_query in search_queries:
+                results = self.vector_search.search_with_reranking(
+                    query=search_query,
+                    top_k=20,
+                    top_n=5
+                )
+                all_results.extend(results)
+            
+            # Remove duplicates and sort by score
+            seen = set()
+            unique_results = []
+            for result in all_results:
+                if result.item_name not in seen:
+                    seen.add(result.item_name)
+                    unique_results.append(result)
+            
+            # Sort by score and take top results
+            results = sorted(unique_results, key=lambda x: x.score, reverse=True)[:5]
             
             # Filter out results with very low relevance scores
             # This helps avoid returning irrelevant products when user asks for something not in inventory
-            min_relevance_score = 0.005  # Lower threshold to allow legitimate results with conversational queries
+            min_relevance_score = 0.003  # Even lower threshold to allow more results for conversational queries
             results = [r for r in results if r.score >= min_relevance_score]
             
             # Log the search
@@ -154,11 +188,24 @@ class ElevenLabsAgent:
     async def handle_elevenlabs_messages(self):
         try:
             async for message in self.elevenlabs_ws:
-                data = json.loads(message)
-                message_type = data.get("type")
-                
-                # Forward all messages to client
-                await self.client_ws.send_json(data)
+                try:
+                    data = json.loads(message)
+                    message_type = data.get("type")
+                    
+                    # Forward all messages to client (only if client is still connected)
+                    try:
+                        if self.client_ws and self.client_ws.client_state.name == "CONNECTED":
+                            await self.client_ws.send_json(data)
+                    except Exception as e:
+                        print(f"⚠️ Error sending message to client: {e}")
+                        # Don't break the loop, just continue processing
+                        continue
+                except json.JSONDecodeError as e:
+                    print(f"⚠️ Error parsing ElevenLabs message: {e}")
+                    continue
+                except Exception as e:
+                    print(f"⚠️ Error processing ElevenLabs message: {e}")
+                    continue
                 
                 if message_type == "conversation_initiation_metadata":
                     conv_id = data.get('conversation_initiation_metadata_event', {}).get('conversation_id')
@@ -247,7 +294,13 @@ class ElevenLabsAgent:
         
     async def close(self):
         if self.elevenlabs_ws:
-            await self.elevenlabs_ws.close()
+            try:
+                await self.elevenlabs_ws.close()
+                print("✅ ElevenLabs connection closed")
+            except Exception as e:
+                print(f"⚠️ Error closing ElevenLabs connection: {e}")
+            finally:
+                self.elevenlabs_ws = None
 
 
 @app.get("/")
@@ -434,36 +487,59 @@ async def websocket_conversation(websocket: WebSocket):
         
         try:
             while True:
-                message = await websocket.receive()
-                
-                if "text" in message:
-                    data = json.loads(message["text"])
+                try:
+                    message = await websocket.receive()
                     
-                    if "user_audio_chunk" in data:
-                        await agent.send_audio_to_elevenlabs(data["user_audio_chunk"])
-                    elif data.get("type") in ["user_message", "user_activity", "pong"]:
-                        # Forward client messages to ElevenLabs
-                        await agent.elevenlabs_ws.send(json.dumps(data))
+                    if "text" in message:
+                        data = json.loads(message["text"])
                         
-                elif "bytes" in message:
-                    audio_bytes = message["bytes"]
-                    audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-                    await agent.send_audio_to_elevenlabs(audio_base64)
+                        if "user_audio_chunk" in data:
+                            await agent.send_audio_to_elevenlabs(data["user_audio_chunk"])
+                        elif data.get("type") in ["user_message", "user_activity", "pong"]:
+                            # Forward client messages to ElevenLabs
+                            if agent.elevenlabs_ws:
+                                await agent.elevenlabs_ws.send(json.dumps(data))
+                            
+                    elif "bytes" in message:
+                        audio_bytes = message["bytes"]
+                        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                        await agent.send_audio_to_elevenlabs(audio_base64)
+                        
+                except WebSocketDisconnect:
+                    print("❌ Client disconnected")
+                    break
+                except Exception as e:
+                    print(f"⚠️ Error processing message: {e}")
+                    continue
                     
         except WebSocketDisconnect:
             print("❌ Client disconnected")
-            elevenlabs_task.cancel()
+        except Exception as e:
+            print(f"❌ Error in WebSocket loop: {e}")
+        finally:
+            if not elevenlabs_task.done():
+                elevenlabs_task.cancel()
+                try:
+                    await elevenlabs_task
+                except asyncio.CancelledError:
+                    pass
             
     except Exception as e:
         print(f"❌ Error: {e}")
-        await websocket.send_json({"error": str(e)})
+        # Only send error if websocket is still open
+        try:
+            if websocket.client_state.name == "CONNECTED":
+                await websocket.send_json({"error": str(e)})
+        except Exception:
+            # WebSocket might be closed, ignore the error
+            pass
         
     finally:
         await agent.close()
         print("🔌 Connection closed")
 
 
-def run_server():
+async def run_server():
     import uvicorn
     
     print("\n" + "="*60)
@@ -475,7 +551,9 @@ def run_server():
     print(f"\n  Agent ID: {AGENT_ID[:12]}...")
     print("\n" + "="*60 + "\n")
     
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+    await server.serve()
 
 
 async def run_testing():

@@ -1,21 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 const StoreMap = ({ showMap, onAislePin }) => {
   const svgRef = useRef(null);
   const [pins, setPins] = useState([]);
 
-  useEffect(() => {
-    if (showMap && svgRef.current) {
-      console.log('🗺️ StoreMap mounted, adding customer location pin');
-      // Add initial green pin at N8 to represent customer's current location
-      addPin('N8', '#22c55e');
-    }
-  }, [showMap]);
-
-  const addPin = (aisleId, color) => {
+  const addPin = useCallback((aisleId, color) => {
     console.log('🗺️ addPin called:', aisleId, color);
     if (!svgRef.current) {
-      console.log('🗺️ SVG ref not available');
+      console.log('🗺️ SVG ref not available, will retry');
+      // Retry after a short delay
+      setTimeout(() => {
+        if (svgRef.current) {
+          addPin(aisleId, color);
+        }
+      }, 100);
       return;
     }
 
@@ -42,11 +40,20 @@ const StoreMap = ({ showMap, onAislePin }) => {
       const filtered = prev.filter(pin => pin.aisleId !== aisleId);
       return [...filtered, newPin];
     });
-  };
+  }, []);
 
-  const clearPins = () => {
+  const clearPins = useCallback(() => {
     setPins([]);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (showMap && svgRef.current) {
+      console.log('🗺️ StoreMap mounted, adding customer location pin');
+      console.log('🗺️ SVG ref available:', !!svgRef.current);
+      // Add initial green pin at N8 to represent customer's current location
+      addPin('N8', '#22c55e');
+    }
+  }, [showMap, addPin]);
 
   // Expose methods to parent component
   useEffect(() => {
@@ -54,7 +61,7 @@ const StoreMap = ({ showMap, onAislePin }) => {
       console.log('🗺️ Exposing map controls to parent');
       onAislePin({ addPin, clearPins });
     }
-  }, [onAislePin]);
+  }, [onAislePin, addPin, clearPins]);
 
   if (!showMap) return null;
 
