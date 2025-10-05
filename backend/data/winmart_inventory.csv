@@ -1,0 +1,502 @@
+id,item_name,category,description,aisle_location
+1,Organic Bananas,Produce,Fresh yellow bananas perfect for snacking,A1
+2,Red Delicious Apples,Produce,Crisp and sweet apples great for lunch boxes,A1
+3,Granny Smith Apples,Produce,Tart green apples ideal for baking,A1
+4,Fresh Strawberries,Produce,Juicy red strawberries in 16oz container,A1
+5,Blueberries,Produce,Fresh blueberries rich in antioxidants,A1
+6,Seedless Red Grapes,Produce,Sweet red grapes ready to eat,A2
+7,Green Seedless Grapes,Produce,Crisp green grapes perfect for snacking,A2
+8,Navel Oranges,Produce,Easy to peel oranges packed with vitamin C,A2
+9,Valencia Oranges,Produce,Juicy oranges great for fresh juice,A2
+10,Fresh Lemons,Produce,Bright yellow lemons for cooking and drinks,A2
+11,Fresh Limes,Produce,Zesty limes perfect for cocktails and cooking,A3
+12,Ripe Avocados,Produce,Creamy avocados ready to eat,A3
+13,Cherry Tomatoes,Produce,Sweet bite-sized tomatoes on the vine,A3
+14,Beefsteak Tomatoes,Produce,Large juicy tomatoes for slicing,A3
+15,Roma Tomatoes,Produce,Firm tomatoes ideal for sauces,A3
+16,English Cucumbers,Produce,Long seedless cucumbers wrapped in plastic,A4
+17,Mini Cucumbers,Produce,Crunchy mini cucumbers perfect for snacking,A4
+18,Bell Peppers Red,Produce,Sweet red peppers rich in vitamin C,A4
+19,Bell Peppers Green,Produce,Crisp green peppers for cooking,A4
+20,Bell Peppers Yellow,Produce,Mild sweet yellow peppers,A4
+21,Fresh Broccoli,Produce,Green broccoli crowns packed with nutrients,A5
+22,Cauliflower Head,Produce,White cauliflower head for roasting,A5
+23,Baby Carrots,Produce,Pre-washed baby carrots ready to snack,A5
+24,Organic Carrots Bunch,Produce,Fresh carrots with greens attached,A5
+25,Celery Stalks,Produce,Crisp celery perfect for dips,A5
+26,Fresh Spinach,Produce,Baby spinach leaves in 10oz container,A6
+27,Romaine Lettuce,Produce,Crisp romaine hearts pack of 3,A6
+28,Iceberg Lettuce,Produce,Classic iceberg lettuce head,A6
+29,Mixed Spring Greens,Produce,Tender salad greens mix,A6
+30,Fresh Kale,Produce,Nutrient-rich curly kale bunch,A6
+31,Red Onions,Produce,Sweet red onions for salads,A7
+32,Yellow Onions,Produce,All-purpose cooking onions,A7
+33,White Onions,Produce,Mild white onions for Mexican dishes,A7
+34,Green Onions,Produce,Fresh scallions for garnishing,A7
+35,Fresh Garlic Bulbs,Produce,Aromatic garlic bulbs for cooking,A7
+36,Fresh Ginger Root,Produce,Spicy ginger root for Asian cooking,A8
+37,Russet Potatoes 5lb,Produce,Starchy potatoes perfect for baking,A8
+38,Red Potatoes,Produce,Waxy red potatoes for boiling,A8
+39,Sweet Potatoes,Produce,Orange sweet potatoes for roasting,A8
+40,Baby Potatoes,Produce,Small creamer potatoes with skin,A8
+41,Fresh Mushrooms,Produce,White button mushrooms 8oz container,A9
+42,Portobello Mushrooms,Produce,Large portobello caps for grilling,A9
+43,Fresh Cilantro,Produce,Fresh cilantro bunch for Mexican cuisine,A9
+44,Fresh Parsley,Produce,Flat leaf parsley bunch,A9
+45,Fresh Basil,Produce,Sweet basil for Italian dishes,A9
+46,Watermelon Whole,Produce,Large seedless watermelon,A10
+47,Cantaloupe,Produce,Sweet orange melon ready to eat,A10
+48,Honeydew Melon,Produce,Green honeydew melon,A10
+49,Fresh Pineapple,Produce,Tropical pineapple whole fruit,A10
+50,Fresh Mango,Produce,Sweet ripe mango ready to eat,A10
+51,Whole Milk Gallon,Dairy,Fresh whole milk vitamin D fortified,B1
+52,2% Reduced Fat Milk,Dairy,Lower fat milk gallon,B1
+53,Skim Milk Gallon,Dairy,Fat-free milk for health conscious,B1
+54,Organic Whole Milk,Dairy,Certified organic whole milk,B1
+55,Chocolate Milk Half Gallon,Dairy,Sweet chocolate flavored milk,B1
+56,Heavy Whipping Cream,Dairy,Rich cream for cooking and baking,B2
+57,Half and Half Pint,Dairy,Coffee creamer blend,B2
+58,Sour Cream 16oz,Dairy,Cultured sour cream for topping,B2
+59,Plain Greek Yogurt,Dairy,Thick creamy Greek yogurt 32oz,B2
+60,Vanilla Greek Yogurt,Dairy,Sweetened vanilla Greek yogurt,B2
+61,Strawberry Yogurt Cups,Dairy,Individual strawberry yogurt 6-pack,B3
+62,Blueberry Yogurt Cups,Dairy,Individual blueberry yogurt 6-pack,B3
+63,Mixed Berry Yogurt,Dairy,Large container mixed berry yogurt,B3
+64,Peach Yogurt,Dairy,Creamy peach flavored yogurt,B3
+65,Low Fat Vanilla Yogurt,Dairy,Light vanilla yogurt large container,B3
+66,Unsalted Butter 1lb,Dairy,Sweet cream butter sticks,B4
+67,Salted Butter 1lb,Dairy,Salted butter for spreading,B4
+68,Margarine Spread,Dairy,Vegetable oil spread,B4
+69,Cream Cheese 8oz,Dairy,Philadelphia style cream cheese,B4
+70,Whipped Cream Cheese,Dairy,Light and fluffy cream cheese,B4
+71,Sharp Cheddar Block,Dairy,Aged sharp cheddar cheese 8oz,B5
+72,Mild Cheddar Block,Dairy,Mild cheddar cheese block,B5
+73,Mozzarella Cheese Block,Dairy,Low moisture mozzarella,B5
+74,Pepper Jack Cheese,Dairy,Spicy pepper jack slices,B5
+75,Swiss Cheese Slices,Dairy,Classic Swiss cheese slices,B5
+76,Provolone Cheese,Dairy,Mild provolone slices,B6
+77,American Cheese Slices,Dairy,Classic American cheese singles,B6
+78,Colby Jack Cheese,Dairy,Marbled Colby and Jack cheese,B6
+79,Feta Cheese Crumbles,Dairy,Mediterranean feta cheese,B6
+80,Parmesan Grated,Dairy,Grated parmesan cheese container,B6
+81,Shredded Mozzarella,Dairy,Pre-shredded mozzarella 8oz bag,B7
+82,Shredded Cheddar,Dairy,Pre-shredded cheddar cheese,B7
+83,Mexican Blend Cheese,Dairy,Shredded Mexican cheese blend,B7
+84,Italian Blend Cheese,Dairy,Shredded Italian cheese mix,B7
+85,String Cheese Sticks,Dairy,Individual mozzarella string cheese 12ct,B7
+86,Large Eggs Dozen,Dairy,Grade A large eggs,B8
+87,Extra Large Eggs,Dairy,Grade A extra large eggs,B8
+88,Organic Eggs Dozen,Dairy,Certified organic free range eggs,B8
+89,Egg Whites Carton,Dairy,Liquid egg whites for cooking,B8
+90,Hard Boiled Eggs,Dairy,Pre-cooked peeled hard boiled eggs 6ct,B8
+91,Orange Juice 64oz,Dairy,Fresh squeezed orange juice,B9
+92,Apple Juice 64oz,Dairy,100% apple juice no sugar added,B9
+93,Cranberry Juice,Dairy,100% cranberry juice cocktail,B9
+94,Lemonade Half Gallon,Dairy,Fresh lemonade refrigerated,B9
+95,Fruit Punch Juice,Dairy,Mixed fruit punch drink,B9
+96,Refrigerated Pizza Dough,Dairy,Fresh pizza dough ready to bake,B10
+97,Refrigerated Biscuits,Dairy,Flaky buttermilk biscuits tube,B10
+98,Crescent Rolls,Dairy,Refrigerated crescent roll dough,B10
+99,Cinnamon Rolls,Dairy,Sweet cinnamon rolls with icing,B10
+100,Cookie Dough Tube,Dairy,Chocolate chip cookie dough ready to bake,B10
+101,Frozen French Fries,Frozen,Crispy golden French fries 2lb bag,C1
+102,Frozen Tater Tots,Frozen,Crispy potato tots family size,C1
+103,Frozen Hash Browns,Frozen,Shredded hash browns,C1
+104,Frozen Waffle Fries,Frozen,Seasoned waffle cut fries,C1
+105,Frozen Sweet Potato Fries,Frozen,Healthier sweet potato fries,C1
+106,Frozen Chicken Nuggets,Frozen,Breaded chicken nuggets 2lb,C2
+107,Frozen Chicken Tenders,Frozen,Breaded chicken breast tenders,C2
+108,Frozen Popcorn Chicken,Frozen,Bite-sized breaded chicken,C2
+109,Frozen Buffalo Wings,Frozen,Spicy buffalo chicken wings,C2
+110,Frozen Chicken Patties,Frozen,Breaded chicken sandwich patties,C2
+111,Frozen Pizza Pepperoni,Frozen,Classic pepperoni frozen pizza,C3
+112,Frozen Pizza Cheese,Frozen,Four cheese frozen pizza,C3
+113,Frozen Pizza Supreme,Frozen,Loaded supreme pizza,C3
+114,Frozen Pizza Margherita,Frozen,Traditional margherita pizza,C3
+115,Frozen Pizza Meat Lovers,Frozen,Pizza with assorted meats,C3
+116,Frozen Lasagna,Frozen,Family size meat lasagna,C4
+117,Frozen Spaghetti Meatballs,Frozen,Spaghetti with meatballs meal,C4
+118,Frozen Mac and Cheese,Frozen,Creamy macaroni and cheese,C4
+119,Frozen Chicken Alfredo,Frozen,Fettuccine with chicken alfredo,C4
+120,Frozen Stir Fry Vegetables,Frozen,Asian vegetable mix for stir fry,C4
+121,Frozen Broccoli Florets,Frozen,Plain frozen broccoli 16oz,C5
+122,Frozen Mixed Vegetables,Frozen,Peas carrots corn green beans mix,C5
+123,Frozen Corn Kernels,Frozen,Sweet yellow corn,C5
+124,Frozen Green Beans,Frozen,Cut green beans,C5
+125,Frozen Peas,Frozen,Sweet green peas,C5
+126,Frozen Spinach Chopped,Frozen,Chopped spinach block,C6
+127,Frozen Brussels Sprouts,Frozen,Baby brussels sprouts,C6
+128,Frozen Cauliflower Rice,Frozen,Low carb cauliflower rice,C6
+129,Frozen Edamame,Frozen,Shelled edamame soybeans,C6
+130,Frozen Asparagus,Frozen,Asparagus spears,C6
+131,Frozen Strawberries,Frozen,Whole frozen strawberries for smoothies,C7
+132,Frozen Blueberries,Frozen,Wild blueberries 16oz,C7
+133,Frozen Raspberries,Frozen,Red raspberries,C7
+134,Frozen Mango Chunks,Frozen,Tropical mango pieces,C7
+135,Frozen Mixed Berries,Frozen,Berry blend for smoothies,C7
+136,Frozen Waffles,Frozen,Homestyle frozen waffles 24ct,C8
+137,Frozen Pancakes,Frozen,Buttermilk pancakes ready to heat,C8
+138,Frozen French Toast,Frozen,Cinnamon French toast sticks,C8
+139,Frozen Breakfast Burritos,Frozen,Sausage egg cheese burritos,C8
+140,Frozen Breakfast Sandwiches,Frozen,English muffin breakfast sandwiches,C8
+141,Ice Cream Vanilla,Frozen,Classic vanilla ice cream half gallon,C9
+142,Ice Cream Chocolate,Frozen,Rich chocolate ice cream,C9
+143,Ice Cream Strawberry,Frozen,Sweet strawberry ice cream,C9
+144,Ice Cream Cookies Cream,Frozen,Cookies and cream ice cream,C9
+145,Ice Cream Mint Chocolate,Frozen,Mint chocolate chip ice cream,C9
+146,Ice Cream Cookie Dough,Frozen,Chocolate chip cookie dough ice cream,C10
+147,Ice Cream Neapolitan,Frozen,Three flavor ice cream,C10
+148,Ice Cream Rocky Road,Frozen,Chocolate marshmallow almond,C10
+149,Ice Cream Butter Pecan,Frozen,Butter pecan ice cream,C10
+150,Ice Cream Sandwiches,Frozen,Vanilla ice cream sandwiches 12ct,C10
+151,Chicken Breasts,Meat,Fresh boneless skinless chicken breasts,D1
+152,Chicken Thighs,Meat,Boneless skinless chicken thighs,D1
+153,Whole Chicken,Meat,Fresh whole fryer chicken,D1
+154,Chicken Drumsticks,Meat,Fresh chicken legs,D1
+155,Chicken Wings,Meat,Fresh chicken wings party pack,D1
+156,Ground Beef 80/20,Meat,Ground chuck 80% lean 20% fat,D2
+157,Ground Beef 90/10,Meat,Lean ground beef 90% lean,D2
+158,Ground Turkey,Meat,Lean ground turkey 93% lean,D2
+159,Ground Chicken,Meat,Ground chicken breast,D2
+160,Ground Pork,Meat,Fresh ground pork,D2
+161,Beef Ribeye Steak,Meat,Premium ribeye steak USDA Choice,D3
+162,Beef New York Strip,Meat,NY strip steak boneless,D3
+163,Beef T-Bone Steak,Meat,T-bone steak with bone,D3
+164,Beef Sirloin Steak,Meat,Top sirloin steak,D3
+165,Beef Tenderloin,Meat,Beef tenderloin filet mignon,D3
+166,Pork Chops Boneless,Meat,Center cut boneless pork chops,D4
+167,Pork Chops Bone-In,Meat,Bone-in pork chops,D4
+168,Pork Tenderloin,Meat,Lean pork tenderloin,D4
+169,Pork Ribs Baby Back,Meat,Baby back pork ribs,D4
+170,Pork Shoulder Roast,Meat,Pork shoulder for slow cooking,D4
+171,Beef Roast Chuck,Meat,Chuck roast for pot roast,D5
+172,Beef Brisket,Meat,Whole beef brisket,D5
+173,Beef Short Ribs,Meat,Bone-in beef short ribs,D5
+174,Lamb Chops,Meat,Premium lamb loin chops,D5
+175,Lamb Leg,Meat,Boneless leg of lamb,D5
+176,Bacon Regular,Meat,Hickory smoked bacon 16oz,D6
+177,Bacon Thick Cut,Meat,Thick cut bacon strips,D6
+178,Turkey Bacon,Meat,Lower fat turkey bacon,D6
+179,Breakfast Sausage Links,Meat,Pork breakfast sausage links,D6
+180,Breakfast Sausage Patties,Meat,Pork sausage patties,D6
+181,Italian Sausage Mild,Meat,Fresh mild Italian sausage links,D7
+182,Italian Sausage Hot,Meat,Spicy Italian sausage,D7
+183,Bratwurst,Meat,Fresh bratwurst sausages,D7
+184,Chorizo Sausage,Meat,Mexican chorizo sausage,D7
+185,Polish Kielbasa,Meat,Smoked Polish sausage,D7
+186,Hot Dogs Beef,Meat,All beef hot dogs 8ct,D8
+187,Hot Dogs Regular,Meat,Classic hot dogs pack,D8
+188,Hot Dogs Turkey,Meat,Turkey hot dogs lower fat,D8
+189,Deli Ham Sliced,Meat,Honey ham deli sliced,D8
+190,Deli Turkey Breast,Meat,Oven roasted turkey breast sliced,D8
+191,Deli Roast Beef,Meat,Slow roasted beef deli meat,D9
+192,Deli Salami,Meat,Italian salami sliced,D9
+193,Deli Bologna,Meat,Classic beef bologna,D9
+194,Deli Chicken Breast,Meat,Grilled chicken breast sliced,D9
+195,Pepperoni Slices,Meat,Pizza pepperoni slices,D9
+196,Fresh Salmon Fillets,Seafood,Atlantic salmon fillets,D10
+197,Fresh Tilapia Fillets,Seafood,Mild white tilapia,D10
+198,Fresh Cod Fillets,Seafood,Wild caught cod,D10
+199,Fresh Shrimp Raw,Seafood,Large raw shrimp peeled deveined,D10
+200,Fresh Crab Legs,Seafood,Snow crab legs,D10
+201,White Bread Loaf,Bakery,Soft white sandwich bread,E1
+202,Wheat Bread Loaf,Bakery,100% whole wheat bread,E1
+203,Honey Wheat Bread,Bakery,Sweet honey wheat bread,E1
+204,Sourdough Bread,Bakery,Artisan sourdough loaf,E1
+205,French Bread,Bakery,Classic French baguette,E1
+206,Italian Bread,Bakery,Crusty Italian bread loaf,E2
+207,Ciabatta Bread,Bakery,Italian ciabatta loaf,E2
+208,Rye Bread,Bakery,Deli style rye bread,E2
+209,Pumpernickel Bread,Bakery,Dark pumpernickel bread,E2
+210,Multigrain Bread,Bakery,7 grain bread loaf,E2
+211,Dinner Rolls Pack,Bakery,Soft dinner rolls 12ct,E3
+212,Hawaiian Sweet Rolls,Bakery,Sweet Hawaiian rolls 12ct,E3
+213,Hamburger Buns,Bakery,Classic hamburger buns 8ct,E3
+214,Hot Dog Buns,Bakery,Hot dog buns 8ct,E3
+215,Sub Sandwich Rolls,Bakery,Hoagie rolls 6ct,E3
+216,English Muffins,Bakery,English muffins 6ct,E4
+217,Bagels Plain,Bakery,Plain bagels 6ct,E4
+218,Bagels Everything,Bakery,Everything bagels with seeds,E4
+219,Bagels Cinnamon Raisin,Bakery,Sweet cinnamon raisin bagels,E4
+220,Pita Bread,Bakery,Pocket pita bread 6ct,E4
+221,Tortillas Flour 10in,Bakery,Large flour tortillas 10ct,E5
+222,Tortillas Flour 8in,Bakery,Fajita size flour tortillas,E5
+223,Tortillas Corn,Bakery,White corn tortillas 30ct,E5
+224,Tortillas Wheat,Bakery,Whole wheat tortillas,E5
+225,Tortilla Chips Plain,Bakery,Restaurant style tortilla chips,E5
+226,Croissants 6ct,Bakery,Butter croissants fresh baked,E6
+227,Muffins Blueberry,Bakery,Fresh blueberry muffins 6ct,E6
+228,Muffins Chocolate Chip,Bakery,Chocolate chip muffins 6ct,E6
+229,Muffins Banana Nut,Bakery,Banana nut muffins fresh,E6
+230,Danish Pastry,Bakery,Assorted fruit danish 4ct,E6
+231,Donuts Glazed,Bakery,Fresh glazed donuts 6ct,E7
+232,Donuts Chocolate,Bakery,Chocolate frosted donuts,E7
+233,Donuts Jelly Filled,Bakery,Raspberry jelly donuts,E7
+234,Donut Holes Mixed,Bakery,Assorted donut holes 20ct,E7
+235,Cinnamon Twist,Bakery,Cinnamon sugar twists,E7
+236,Cookies Chocolate Chip,Bakery,Fresh baked chocolate chip cookies,E8
+237,Cookies Sugar,Bakery,Classic sugar cookies decorated,E8
+238,Cookies Oatmeal Raisin,Bakery,Oatmeal raisin cookies,E8
+239,Cookies Peanut Butter,Bakery,Peanut butter cookies,E8
+240,Brownies,Bakery,Fudge brownies tray,E8
+241,Chocolate Cake,Bakery,Double chocolate layer cake,E9
+242,Vanilla Cake,Bakery,Vanilla cake with buttercream,E9
+243,Carrot Cake,Bakery,Carrot cake with cream cheese frosting,E9
+244,Cheesecake Plain,Bakery,New York style cheesecake,E9
+245,Strawberry Cheesecake,Bakery,Cheesecake with strawberry topping,E9
+246,Apple Pie,Bakery,Traditional apple pie,E10
+247,Cherry Pie,Bakery,Sweet cherry pie,E10
+248,Pumpkin Pie,Bakery,Spiced pumpkin pie,E10
+249,Pecan Pie,Bakery,Southern pecan pie,E10
+250,Lemon Meringue Pie,Bakery,Tart lemon pie with meringue,E10
+251,Tomato Soup Canned,Canned Goods,Classic tomato soup 10.75oz,F1
+252,Chicken Noodle Soup,Canned Goods,Chicken noodle soup condensed,F1
+253,Cream of Mushroom Soup,Canned Goods,Cream of mushroom condensed,F1
+254,Cream of Chicken Soup,Canned Goods,Cream of chicken soup,F1
+255,Vegetable Soup,Canned Goods,Mixed vegetable soup,F1
+256,Minestrone Soup,Canned Goods,Italian minestrone soup,F2
+257,Clam Chowder,Canned Goods,New England clam chowder,F2
+258,Beef Chili,Canned Goods,Beef chili with beans,F2
+259,Turkey Chili,Canned Goods,Turkey chili lower fat,F2
+260,White Chicken Chili,Canned Goods,White bean chicken chili,F2
+261,Black Beans Canned,Canned Goods,Black beans 15oz can,F3
+262,Kidney Beans Canned,Canned Goods,Red kidney beans,F3
+263,Pinto Beans Canned,Canned Goods,Pinto beans,F3
+264,Chickpeas Canned,Canned Goods,Garbanzo beans chickpeas,F3
+265,Great Northern Beans,Canned Goods,White beans,F3
+266,Refried Beans,Canned Goods,Traditional refried beans,F4
+267,Baked Beans,Canned Goods,BBQ baked beans,F4
+268,Green Beans Canned,Canned Goods,Cut green beans,F4
+269,Corn Kernels Canned,Canned Goods,Whole kernel yellow corn,F4
+270,Sweet Peas Canned,Canned Goods,Sweet peas,F4
+271,Diced Tomatoes Canned,Canned Goods,Diced tomatoes 14.5oz,F5
+272,Crushed Tomatoes,Canned Goods,Crushed tomatoes for sauce,F5
+273,Tomato Paste,Canned Goods,Concentrated tomato paste 6oz,F5
+274,Tomato Sauce,Canned Goods,Plain tomato sauce 8oz,F5
+275,Stewed Tomatoes,Canned Goods,Stewed tomatoes with seasonings,F5
+276,Tuna Canned in Water,Canned Goods,Chunk light tuna 5oz,F6
+277,Tuna Canned in Oil,Canned Goods,Albacore tuna in oil,F6
+278,Salmon Canned,Canned Goods,Pink salmon 14.75oz,F6
+279,Sardines Canned,Canned Goods,Sardines in oil,F6
+280,Anchovies,Canned Goods,Flat anchovies in oil,F6
+281,Chicken Breast Canned,Canned Goods,Canned chicken breast 12.5oz,F7
+282,Spam Classic,Canned Goods,Spam luncheon meat,F7
+283,Vienna Sausages,Canned Goods,Vienna sausages in broth,F7
+284,Corned Beef,Canned Goods,Canned corned beef,F7
+285,Roast Beef Canned,Canned Goods,Roast beef in gravy,F7
+286,Sliced Peaches,Canned Goods,Yellow peaches in syrup,F8
+287,Pear Halves,Canned Goods,Pear halves in juice,F8
+288,Fruit Cocktail,Canned Goods,Mixed fruit cocktail,F8
+289,Mandarin Oranges,Canned Goods,Mandarin orange segments,F8
+290,Pineapple Chunks,Canned Goods,Pineapple chunks in juice,F8
+291,Apple Sauce,Canned Goods,Smooth applesauce cups,F9
+292,Cranberry Sauce,Canned Goods,Whole berry cranberry sauce,F9
+293,Cherry Pie Filling,Canned Goods,Cherry pie filling 21oz,F9
+294,Apple Pie Filling,Canned Goods,Apple pie filling,F9
+295,Pumpkin Puree,Canned Goods,Pure pumpkin for baking,F9
+296,Coconut Milk,Canned Goods,Thai coconut milk 13.5oz,F10
+297,Evaporated Milk,Canned Goods,Evaporated milk 12oz,F10
+298,Sweetened Condensed Milk,Canned Goods,Sweetened condensed milk,F10
+299,Chicken Broth,Canned Goods,Low sodium chicken broth 32oz,F10
+300,Beef Broth,Canned Goods,Beef broth 32oz,F10
+301,Spaghetti Pasta,Dry Goods,Classic spaghetti pasta 16oz,G1
+302,Penne Pasta,Dry Goods,Penne rigate pasta,G1
+303,Fettuccine Pasta,Dry Goods,Flat fettuccine noodles,G1
+304,Linguine Pasta,Dry Goods,Linguine pasta,G1
+305,Angel Hair Pasta,Dry Goods,Thin angel hair pasta,G1
+306,Rotini Pasta,Dry Goods,Spiral rotini pasta,G2
+307,Rigatoni Pasta,Dry Goods,Large tube rigatoni,G2
+308,Bow Tie Pasta,Dry Goods,Farfalle bow tie pasta,G2
+309,Elbow Macaroni,Dry Goods,Elbow macaroni for mac and cheese,G2
+310,Shells Pasta,Dry Goods,Medium pasta shells,G2
+311,Lasagna Noodles,Dry Goods,Lasagna pasta sheets,G3
+312,Egg Noodles Wide,Dry Goods,Wide egg noodles,G3
+313,Ramen Noodles,Dry Goods,Instant ramen noodle packs 6ct,G3
+314,Rice Noodles,Dry Goods,Asian rice stick noodles,G3
+315,Udon Noodles,Dry Goods,Japanese udon noodles,G3
+316,White Rice Long Grain,Dry Goods,Long grain white rice 5lb,G4
+317,Brown Rice Long Grain,Dry Goods,Whole grain brown rice,G4
+318,Basmati Rice,Dry Goods,Aromatic basmati rice,G4
+319,Jasmine Rice,Dry Goods,Fragrant jasmine rice,G4
+320,Arborio Rice,Dry Goods,Italian risotto rice,G4
+321,Instant Rice,Dry Goods,Quick cooking instant rice,G5
+322,Spanish Rice Mix,Dry Goods,Seasoned Spanish rice,G5
+323,Wild Rice Blend,Dry Goods,Wild and long grain rice mix,G5
+324,Quinoa White,Dry Goods,Organic white quinoa,G5
+325,Quinoa Tricolor,Dry Goods,Red white black quinoa blend,G5
+326,Couscous,Dry Goods,Israeli pearl couscous,G6
+327,Bulgur Wheat,Dry Goods,Cracked bulgur wheat,G6
+328,Barley Pearl,Dry Goods,Pearl barley,G6
+329,Farro,Dry Goods,Ancient grain farro,G6
+330,Steel Cut Oats,Dry Goods,Irish steel cut oats,G6
+331,Dried Lentils Green,Dry Goods,Green lentils 16oz bag,G7
+332,Dried Lentils Red,Dry Goods,Red split lentils,G7
+333,Dried Black Beans,Dry Goods,Dried black beans bag,G7
+334,Dried Pinto Beans,Dry Goods,Dried pinto beans,G7
+335,Dried Navy Beans,Dry Goods,Small white navy beans,G7
+336,Flour All Purpose,Dry Goods,All purpose flour 5lb,G8
+337,Bread Flour,Dry Goods,High protein bread flour,G8
+338,Cake Flour,Dry Goods,Fine cake flour,G8
+339,Whole Wheat Flour,Dry Goods,100% whole wheat flour,G8
+340,Self Rising Flour,Dry Goods,Self rising flour with leavening,G8
+341,Granulated Sugar,Dry Goods,White granulated sugar 4lb,G9
+342,Brown Sugar Light,Dry Goods,Light brown sugar,G9
+343,Brown Sugar Dark,Dry Goods,Dark brown sugar,G9
+344,Powdered Sugar,Dry Goods,Confectioners powdered sugar,G9
+345,Sugar Cubes,Dry Goods,White sugar cubes box,G9
+346,Pancake Mix,Dry Goods,Complete pancake mix just add water,G10
+347,Waffle Mix,Dry Goods,Belgian waffle mix,G10
+348,Brownie Mix,Dry Goods,Fudge brownie mix box,G10
+349,Cake Mix Chocolate,Dry Goods,Chocolate cake mix,G10
+350,Cake Mix Vanilla,Dry Goods,Vanilla cake mix,G10
+351,Potato Chips Classic,Snacks,Classic potato chips family size,H1
+352,Potato Chips BBQ,Snacks,BBQ flavored chips,H1
+353,Potato Chips Sour Cream,Snacks,Sour cream and onion chips,H1
+354,Potato Chips Salt Vinegar,Snacks,Salt and vinegar chips,H1
+355,Potato Chips Cheddar,Snacks,Cheddar cheese chips,H1
+356,Tortilla Chips Restaurant,Snacks,Restaurant style tortilla chips large,H2
+357,Tortilla Chips Lime,Snacks,Lime flavored tortilla chips,H2
+358,Tortilla Chips Spicy,Snacks,Spicy hot tortilla chips,H2
+359,Doritos Nacho Cheese,Snacks,Nacho cheese Doritos,H2
+360,Doritos Cool Ranch,Snacks,Cool ranch Doritos,H2
+361,Cheetos Crunchy,Snacks,Crunchy cheese puffs,H3
+362,Cheetos Puffs,Snacks,Puffy cheese snacks,H3
+363,Cheez-It Crackers,Snacks,Baked cheese crackers,H3
+364,Goldfish Crackers,Snacks,Cheddar goldfish crackers,H3
+365,Cheese Puffs,Snacks,Cheese flavored puffs,H3
+366,Pretzels Traditional,Snacks,Classic twisted pretzels,H4
+367,Pretzel Rods,Snacks,Long pretzel rods,H4
+368,Pretzel Sticks,Snacks,Thin pretzel sticks,H4
+369,Soft Pretzel Bites,Snacks,Frozen soft pretzel bites,H4
+370,Pita Chips Sea Salt,Snacks,Baked pita chips,H4
+371,Popcorn Microwave Butter,Snacks,Butter microwave popcorn 6ct,H5
+372,Popcorn Kettle Corn,Snacks,Sweet and salty kettle corn,H5
+373,Popcorn Movie Theater,Snacks,Movie theater butter popcorn,H5
+374,Popcorn Kernels,Snacks,Unpopped popcorn kernels jar,H5
+375,Rice Cakes Plain,Snacks,Lightly salted rice cakes,H5
+376,Granola Bars Oats Honey,Snacks,Chewy oats and honey bars 10ct,H6
+377,Granola Bars Chocolate Chip,Snacks,Chocolate chip granola bars,H6
+378,Protein Bars Chocolate,Snacks,High protein chocolate bars,H6
+379,Protein Bars Peanut Butter,Snacks,Peanut butter protein bars,H6
+380,Energy Bars Mixed Berry,Snacks,Mixed berry energy bars,H6
+381,Trail Mix Classic,Snacks,Classic trail mix with nuts and raisins,H7
+382,Trail Mix Deluxe,Snacks,Deluxe trail mix with chocolate,H7
+383,Mixed Nuts Salted,Snacks,Salted mixed nuts can,H7
+384,Mixed Nuts Unsalted,Snacks,Unsalted mixed nuts,H7
+385,Almonds Roasted,Snacks,Roasted salted almonds,H7
+386,Cashews Roasted,Snacks,Roasted cashews,H8
+387,Peanuts Dry Roasted,Snacks,Dry roasted peanuts jar,H8
+388,Pistachios Roasted,Snacks,Roasted pistachios in shell,H8
+389,Sunflower Seeds,Snacks,Roasted sunflower seeds,H8
+390,Pumpkin Seeds,Snacks,Roasted pepitas,H8
+391,Beef Jerky Original,Snacks,Original beef jerky,H9
+392,Beef Jerky Teriyaki,Snacks,Teriyaki beef jerky,H9
+393,Turkey Jerky,Snacks,Lower fat turkey jerky,H9
+394,Slim Jim Sticks,Snacks,Slim Jim meat sticks 20ct,H9
+395,String Cheese Snacks,Snacks,Mozzarella string cheese 24ct,H9
+396,Crackers Saltine,Snacks,Original saltine crackers,H10
+397,Crackers Ritz,Snacks,Buttery Ritz crackers,H10
+398,Crackers Wheat Thins,Snacks,Whole grain wheat crackers,H10
+399,Crackers Triscuit,Snacks,Woven wheat crackers,H10
+400,Graham Crackers,Snacks,Honey graham crackers,H10
+401,Soda Coca Cola 12pk,Beverages,Coca Cola cans 12oz 12 pack,I1
+402,Soda Pepsi 12pk,Beverages,Pepsi cans 12 pack,I1
+403,Soda Sprite 12pk,Beverages,Sprite lemon-lime soda,I1
+404,Soda Mountain Dew 12pk,Beverages,Mountain Dew citrus soda,I1
+405,Soda Dr Pepper 12pk,Beverages,Dr Pepper soda 12 pack,I1
+406,Soda Diet Coke 12pk,Beverages,Diet Coca Cola 12 pack,I2
+407,Soda Diet Pepsi 12pk,Beverages,Diet Pepsi 12 pack,I2
+408,Soda Coke Zero 12pk,Beverages,Coke Zero Sugar 12 pack,I2
+409,Soda Ginger Ale 12pk,Beverages,Ginger ale soda,I2
+410,Soda Root Beer 12pk,Beverages,Classic root beer,I2
+411,Bottled Water 24pk,Beverages,Purified drinking water 16.9oz bottles,I3
+412,Sparkling Water Plain,Beverages,Carbonated water 12pk cans,I3
+413,Sparkling Water Lime,Beverages,Lime flavored sparkling water,I3
+414,Sparkling Water Lemon,Beverages,Lemon sparkling water,I3
+415,Sparkling Water Berry,Beverages,Mixed berry sparkling water,I3
+416,Energy Drink Red Bull,Beverages,Red Bull energy drink 4pk,I4
+417,Energy Drink Monster,Beverages,Monster energy drink 4pk,I4
+418,Energy Drink Rockstar,Beverages,Rockstar energy drink,I4
+419,Gatorade Lemon Lime,Beverages,Lemon lime sports drink 8pk,I4
+420,Gatorade Fruit Punch,Beverages,Fruit punch Gatorade,I4
+421,Coffee Ground Regular,Beverages,Medium roast ground coffee 12oz,I5
+422,Coffee Ground Dark Roast,Beverages,Dark roast ground coffee,I5
+423,Coffee Ground Decaf,Beverages,Decaf ground coffee,I5
+424,Coffee Instant,Beverages,Instant coffee crystals jar,I5
+425,Coffee K-Cups Variety,Beverages,Single serve K-cup variety pack,I5
+426,Tea Bags Black,Beverages,Black tea bags 100ct,I6
+427,Tea Bags Green,Beverages,Green tea bags 100ct,I6
+428,Tea Bags Herbal,Beverages,Herbal tea variety pack,I6
+429,Tea Bags Earl Grey,Beverages,Earl Grey black tea,I6
+430,Iced Tea Mix,Beverages,Sweet tea mix makes 2 quarts,I6
+431,Hot Chocolate Mix,Beverages,Hot cocoa mix packets 10ct,I7
+432,Chocolate Milk Powder,Beverages,Chocolate milk mix canister,I7
+433,Strawberry Milk Mix,Beverages,Strawberry milk powder,I7
+434,Protein Shake Powder,Beverages,Vanilla protein shake mix,I7
+435,Coffee Creamer Powder,Beverages,Powdered coffee creamer,I7
+436,Vegetable Juice V8,Beverages,Original V8 vegetable juice 6pk,I8
+437,Tomato Juice,Beverages,100% tomato juice bottle,I8
+438,Prune Juice,Beverages,Prune juice for digestion,I8
+439,Grape Juice 100%,Beverages,Pure grape juice 64oz,I8
+440,Apple Cider,Beverages,Fresh apple cider seasonal,I8
+441,Coconut Water Plain,Beverages,Natural coconut water 12oz,I9
+442,Aloe Vera Drink,Beverages,Aloe vera juice drink,I9
+443,Kombucha Ginger,Beverages,Probiotic kombucha tea,I9
+444,Electrolyte Water,Beverages,Enhanced electrolyte water,I9
+445,Vitamin Water,Beverages,Flavored vitamin water,I9
+446,Beer Bud Light 12pk,Beverages,Bud Light beer 12oz bottles,I10
+447,Beer Coors Light 12pk,Beverages,Coors Light 12 pack,I10
+448,Beer Corona 6pk,Beverages,Corona Extra 6 pack bottles,I10
+449,Beer Heineken 6pk,Beverages,Heineken lager 6 pack,I10
+450,Wine Red Cabernet,Beverages,Cabernet Sauvignon red wine,I10
+451,Cereal Cheerios,Breakfast,Original Cheerios 18oz,J1
+452,Cereal Honey Nut Cheerios,Breakfast,Honey nut flavored Cheerios,J1
+453,Cereal Frosted Flakes,Breakfast,Sugar frosted corn flakes,J1
+454,Cereal Fruit Loops,Breakfast,Colorful fruit flavored loops,J1
+455,Cereal Lucky Charms,Breakfast,Marshmallow cereal,J1
+456,Cereal Cinnamon Toast,Breakfast,Cinnamon sugar cereal squares,J2
+457,Cereal Cocoa Puffs,Breakfast,Chocolate flavored puffs,J2
+458,Cereal Rice Krispies,Breakfast,Crispy rice cereal,J2
+459,Cereal Corn Flakes,Breakfast,Original corn flakes,J2
+460,Cereal Raisin Bran,Breakfast,Bran flakes with raisins,J2
+461,Cereal Shredded Wheat,Breakfast,Whole grain shredded wheat,J3
+462,Cereal Special K,Breakfast,Special K original,J3
+463,Cereal Chex Wheat,Breakfast,Wheat Chex cereal,J3
+464,Cereal Chex Rice,Breakfast,Rice Chex gluten free,J3
+465,Cereal Life Original,Breakfast,Multigrain Life cereal,J3
+466,Oatmeal Instant Variety,Breakfast,Instant oatmeal packets variety 10ct,J4
+467,Oatmeal Instant Plain,Breakfast,Plain instant oatmeal,J4
+468,Oatmeal Quick Oats,Breakfast,Quick cooking oats canister,J4
+469,Oatmeal Old Fashioned,Breakfast,Old fashioned rolled oats,J4
+470,Cream of Wheat,Breakfast,Hot wheat cereal,J4
+471,Pop Tarts Strawberry,Breakfast,Frosted strawberry Pop Tarts,J5
+472,Pop Tarts Brown Sugar,Breakfast,Brown sugar cinnamon Pop Tarts,J5
+473,Pop Tarts Blueberry,Breakfast,Frosted blueberry Pop Tarts,J5
+474,Pop Tarts S'mores,Breakfast,S'mores flavored Pop Tarts,J5
+475,Toaster Strudel,Breakfast,Frozen toaster strudel 6ct,J5
+476,Syrup Maple Pure,Breakfast,100% pure maple syrup,J6
+477,Syrup Pancake,Breakfast,Original pancake syrup 24oz,J6
+478,Syrup Sugar Free,Breakfast,Sugar free pancake syrup,J6
+479,Honey Squeeze Bottle,Breakfast,Pure honey squeeze bottle,J6
+480,Agave Nectar,Breakfast,Organic agave sweetener,J6
+481,Peanut Butter Creamy,Condiments,Creamy peanut butter 18oz,K1
+482,Peanut Butter Crunchy,Condiments,Crunchy peanut butter,K1
+483,Peanut Butter Natural,Condiments,Natural peanut butter no sugar,K1
+484,Almond Butter,Condiments,Roasted almond butter,K1
+485,Cashew Butter,Condiments,Cashew nut butter,K1
+486,Jelly Strawberry,Condiments,Strawberry jelly 18oz,K2
+487,Jelly Grape,Condiments,Concord grape jelly,K2
+488,Jam Raspberry,Condiments,Raspberry preserves,K2
+489,Jam Apricot,Condiments,Apricot jam,K2
+490,Orange Marmalade,Condiments,Orange marmalade spread,K2
+491,Ketchup Regular,Condiments,Tomato ketchup 32oz,K3
+492,Ketchup Organic,Condiments,Organic ketchup,K3
+493,Mustard Yellow,Condiments,Classic yellow mustard,K3
+494,Mustard Dijon,Condiments,Dijon mustard,K3
+495,Mustard Spicy Brown,Condiments,Spicy brown deli mustard,K3
+496,Mayonnaise Regular,Condiments,Real mayonnaise 30oz,K4
+497,Mayonnaise Light,Condiments,Light mayo reduced fat,K4
+498,Miracle Whip,Condiments,Miracle Whip dressing,K4
+499,Ranch Dressing,Condiments,Ranch salad dressing bottle,K4
+500,Italian Dressing,Condiments,Italian vinaigrette dressing,K4
+

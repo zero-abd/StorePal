@@ -13,6 +13,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import vector search engine
+from pinecone_vdb.vector_search import VectorSearchEngine
+
 load_dotenv()
 
 app = FastAPI(
@@ -31,6 +34,7 @@ app.add_middleware(
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 AGENT_ID = os.getenv("ELEVENLABS_AGENT_ID")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
 if not ELEVENLABS_API_KEY or not AGENT_ID:
     print("\n⚠️  ERROR: Missing credentials!")
@@ -39,17 +43,95 @@ if not ELEVENLABS_API_KEY or not AGENT_ID:
     print("ELEVENLABS_AGENT_ID=your_agent_id\n")
     raise ValueError("ELEVENLABS_API_KEY and AGENT_ID must be set in .env file")
 
+# Initialize Vector Search Engine (optional - will only be used if PINECONE_API_KEY is set)
+vector_search = None
+if PINECONE_API_KEY:
+    try:
+        vector_search = VectorSearchEngine()
+        print("✅ Vector Search Engine initialized")
+    except Exception as e:
+        print(f"⚠️  Vector Search Engine not available: {e}")
+else:
+    print("ℹ️  Pinecone not configured - vector search disabled")
+
 
 class ElevenLabsAgent:
     def __init__(self):
         self.elevenlabs_ws: Optional[websockets.WebSocketClientProtocol] = None
         self.client_ws: Optional[WebSocket] = None
+        self.vector_search = vector_search
         
     async def connect_to_elevenlabs(self):
         uri = f"wss://api.elevenlabs.io/v1/convai/conversation?agent_id={AGENT_ID}"
         headers = {"xi-api-key": ELEVENLABS_API_KEY}
         self.elevenlabs_ws = await websockets.connect(uri, extra_headers=headers)
         print("✅ Connected to ElevenLabs API")
+    
+    def should_search_products(self, query: str) -> bool:
+        """
+        Determine if a user query is asking about products.
+        
+        Args:
+            query: User's transcript
+            
+        Returns:
+            True if the query should trigger a product search
+        """
+        if not self.vector_search:
+            return False
+        
+        # Keywords that indicate product search
+        search_keywords = [
+            "find", "where", "locate", "aisle", "product", "item",
+            "have", "sell", "carry", "stock", "available",
+            "need", "want", "looking for", "search",
+            "show me", "get me", "buy", "purchase"
+        ]
+        
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in search_keywords)
+    
+    async def search_products(self, query: str) -> str:
+        """
+        Search for products using vector search and return formatted response.
+        
+        Args:
+            query: User's product query
+            
+        Returns:
+            Formatted product information string
+        """
+        if not self.vector_search:
+            return "I'm sorry, product search is not available at the moment."
+        
+        try:
+            # Perform search with reranking for best results
+            results = self.vector_search.search_with_reranking(
+                query=query,
+                top_k=20,
+                top_n=5
+            )
+            
+            # Log the search
+            print(f"🔍 Product search: '{query}' -> {len(results)} results")
+            print(f"\n🔍 DEBUG - Results details:")
+            for i, result in enumerate(results, 1):
+                print(f"  {i}. {result.item_name}")
+                print(f"     Category: {result.category}")
+                print(f"     Aisle: {result.aisle_location}")
+                print(f"     Description: {result.description}")
+                print(f"     Score: {result.score}")
+            
+            # Format results for the agent
+            response = self.vector_search.format_results_for_agent(results)
+            print(f"\n🔍 DEBUG - Formatted response:")
+            print(response)
+            
+            return response
+            
+        except Exception as e:
+            print(f"❌ Error searching products: {e}")
+            return "I encountered an error while searching for products. Please try again."
         
     async def send_initiation_message(self, config_override: dict = None):
         initiation_message = {"type": "conversation_initiation_client_data"}
@@ -82,6 +164,18 @@ class ElevenLabsAgent:
                     if user_transcript:
                         if is_final:
                             print(f"\n👤 User: {user_transcript}")
+                            
+                            # Check if this is a product query and search if needed
+                            if self.should_search_products(user_transcript):
+                                product_info = await self.search_products(user_transcript)
+                                
+                                # Send product information as additional context
+                                # This can be displayed in the UI or used by the agent
+                                await self.client_ws.send_json({
+                                    "type": "product_search_result",
+                                    "query": user_transcript,
+                                    "results": product_info
+                                })
                         else:
                             # Print interim transcripts in real-time with carriage return
                             print(f"\r👤 User (interim): {user_transcript}", end='', flush=True)
@@ -128,8 +222,39 @@ async def root():
 async def health():
     return {
         "status": "healthy",
-        "api_configured": bool(ELEVENLABS_API_KEY and AGENT_ID)
+        "api_configured": bool(ELEVENLABS_API_KEY and AGENT_ID),
+        "vector_search_enabled": vector_search is not None
     }
+
+
+@app.get("/search")
+async def search_products(q: str, top_k: int = 5):
+    """
+    API endpoint to search for products.
+    
+    Args:
+        q: Search query
+        top_k: Number of results to return
+        
+    Returns:
+        List of matching products
+    """
+    if not vector_search:
+        return {
+            "error": "Vector search is not available. Please configure PINECONE_API_KEY."
+        }
+    
+    try:
+        results = vector_search.search_with_reranking(q, top_k=20, top_n=top_k)
+        return {
+            "query": q,
+            "results": [result.to_dict() for result in results],
+            "formatted_response": vector_search.format_results_for_agent(results)
+        }
+    except Exception as e:
+        return {
+            "error": f"Search failed: {str(e)}"
+        }
 
 
 @app.websocket("/ws/conversation")
@@ -143,12 +268,27 @@ async def websocket_conversation(websocket: WebSocket):
     try:
         await agent.connect_to_elevenlabs()
         
+        # Enhanced prompt with product search capabilities
+        product_search_info = ""
+        if vector_search:
+            product_search_info = (
+                " I have access to our complete WinMart inventory database with over 500 products "
+                "across categories like Produce, Dairy, Frozen, Meat, Bakery, and more. "
+                "I can help you find products, tell you their exact aisle locations, and provide descriptions."
+            )
+        
         config_override = {
             "agent": {
                 "prompt": {
-                    "prompt": "You are a helpful AI assistant for StorePal. You help users with shopping, product recommendations, and store navigation."
+                    "prompt": (
+                        f"You are a helpful AI shopping assistant for StorePal at WinMart.{product_search_info} "
+                        "When customers ask about products, provide specific information including the product name, "
+                        "category, aisle location, and description. Be friendly, helpful, and concise. "
+                        "If asked about product locations, always mention the aisle number clearly. "
+                        "Help customers with shopping lists, product recommendations, and store navigation."
+                    )
                 },
-                "first_message": "Hi! I'm your StorePal assistant. How can I help you today?",
+                "first_message": "Hi! I'm your StorePal assistant at WinMart. I can help you find products, check aisle locations, and make shopping recommendations. What are you looking for today?",
                 "language": "en"
             }
         }
@@ -248,14 +388,29 @@ async def run_testing():
         async with websockets.connect(uri, extra_headers=headers) as ws:
             print("✅ Connected to ElevenLabs\n")
             
+            # Enhanced prompt with product search capabilities
+            product_search_info = ""
+            if vector_search:
+                product_search_info = (
+                    " I have access to our complete WinMart inventory database with over 500 products "
+                    "across categories like Produce, Dairy, Frozen, Meat, Bakery, and more. "
+                    "I can help you find products, tell you their exact aisle locations, and provide descriptions."
+                )
+            
             initiation_message = {
                 "type": "conversation_initiation_client_data",
                 "conversation_config_override": {
                     "agent": {
                         "prompt": {
-                            "prompt": "You are a helpful AI assistant for StorePal. You help users with shopping, product recommendations, and store navigation."
+                            "prompt": (
+                                f"You are a helpful AI shopping assistant for StorePal at WinMart.{product_search_info} "
+                                "When customers ask about products, provide specific information including the product name, "
+                                "category, aisle location, and description. Be friendly, helpful, and concise. "
+                                "If asked about product locations, always mention the aisle number clearly. "
+                                "Help customers with shopping lists, product recommendations, and store navigation."
+                            )
                         },
-                        "first_message": "Hi! I'm your StorePal assistant. How can I help you today?",
+                        "first_message": "Hi! I'm your StorePal assistant at WinMart. I can help you find products, check aisle locations, and make shopping recommendations. What are you looking for today?",
                         "language": "en"
                     }
                 }
