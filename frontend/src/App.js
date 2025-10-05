@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import StoreMap from './StoreMap';
+import Dashboard from './Dashboard';
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -12,6 +13,7 @@ function App() {
   const [mapControls, setMapControls] = useState(null);
   const [pendingAisles, setPendingAisles] = useState([]);
   const [userFinishedSpeaking, setUserFinishedSpeaking] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   
   const wsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -307,7 +309,7 @@ function App() {
     if (mapControls && pendingAisles.length > 0) {
       console.log('🗺️ Adding pins for pending aisles:', pendingAisles);
       pendingAisles.forEach(aisle => {
-        mapControls.addPin(aisle, '#ef4444'); // Red pin for mentioned aisles
+        mapControls.addPin(aisle, '#ef4444'); // Red pin for store locations (mentioned aisles)
       });
       setPendingAisles([]); // Clear pending aisles
     }
@@ -579,6 +581,13 @@ function App() {
                   <span>Recording</span>
                 </div>
               )}
+              <button 
+                className="dashboard-toggle"
+                onClick={() => setShowDashboard(true)}
+                title="Open Dashboard"
+              >
+                <span className="dashboard-icon">⚙️</span>
+              </button>
             </div>
           </header>
 
@@ -645,17 +654,6 @@ function App() {
                   <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
                 </button>
                 <button 
-                  className="control-btn test-btn"
-                  onClick={() => {
-                    console.log('🧪 Test button clicked');
-                    setShowMap(true);
-                    setPendingAisles(['A2', 'F8']);
-                  }}
-                >
-                  <span className="btn-icon">🧪</span>
-                  <span>Test Map</span>
-                </button>
-                <button 
                   className="control-btn disconnect-btn" 
                   onClick={disconnect}
                 >
@@ -691,6 +689,12 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Dashboard */}
+      <Dashboard 
+        isOpen={showDashboard} 
+        onClose={() => setShowDashboard(false)} 
+      />
     </div>
   );
 }

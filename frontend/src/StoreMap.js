@@ -6,8 +6,8 @@ const StoreMap = ({ showMap, onAislePin }) => {
 
   useEffect(() => {
     if (showMap && svgRef.current) {
-      console.log('🗺️ StoreMap mounted, adding N8 pin');
-      // Add initial green pin at N8
+      console.log('🗺️ StoreMap mounted, adding customer location pin');
+      // Add initial green pin at N8 to represent customer's current location
       addPin('N8', '#22c55e');
     }
   }, [showMap]);
@@ -615,6 +615,18 @@ const StoreMap = ({ showMap, onAislePin }) => {
             </g>
           ))}
         </svg>
+      </div>
+      
+      {/* Location Legend */}
+      <div className="map-legend">
+        <div className="legend-item">
+          <div className="legend-color" style={{ backgroundColor: '#22c55e' }}></div>
+          <span>You are here</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color" style={{ backgroundColor: '#ef4444' }}></div>
+          <span>Store locations</span>
+        </div>
       </div>
     </div>
   );

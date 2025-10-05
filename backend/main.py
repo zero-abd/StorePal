@@ -10,8 +10,11 @@ from typing import Optional
 import pyaudio
 import websockets
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import pandas as pd
+import os
 
 # Import vector search engine
 from pinecone_vdb.vector_search import VectorSearchEngine
@@ -31,6 +34,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for uploaded maps
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 AGENT_ID = os.getenv("ELEVENLABS_AGENT_ID")
@@ -293,6 +299,89 @@ async def search_products(q: str, top_k: int = 5):
         }
 
 
+@app.get("/api/inventory")
+async def get_inventory():
+    """
+    Get the complete inventory from the CSV file.
+    
+    Returns:
+        List of all products in inventory
+    """
+    try:
+        csv_path = "data/winmart_inventory.csv"
+        if not os.path.exists(csv_path):
+            return {"error": "Inventory file not found"}
+        
+        df = pd.read_csv(csv_path)
+        inventory = df.to_dict('records')
+        return inventory
+    except Exception as e:
+        return {"error": f"Failed to load inventory: {str(e)}"}
+
+
+@app.get("/api/aisles-categories")
+async def get_aisles_categories():
+    """
+    Get available aisles and product categories.
+    
+    Returns:
+        Dictionary with aisles and categories lists
+    """
+    try:
+        csv_path = "data/winmart_inventory.csv"
+        if not os.path.exists(csv_path):
+            return {"error": "Inventory file not found"}
+        
+        df = pd.read_csv(csv_path)
+        
+        # Get unique aisles
+        aisles = sorted(df['aisle_location'].unique().tolist())
+        
+        # Get unique categories
+        categories = sorted(df['category'].unique().tolist())
+        
+        return {
+            "aisles": aisles,
+            "categories": categories
+        }
+    except Exception as e:
+        return {"error": f"Failed to load aisles and categories: {str(e)}"}
+
+
+@app.post("/api/upload-map")
+async def upload_map(file: UploadFile = File(...)):
+    """
+    Upload a new SVG store map.
+    
+    Args:
+        file: SVG file to upload
+        
+    Returns:
+        Success message or error
+    """
+    try:
+        # Check if file is SVG
+        if not file.filename.endswith('.svg'):
+            raise HTTPException(status_code=400, detail="Only SVG files are allowed")
+        
+        # Create static directory if it doesn't exist
+        os.makedirs("static", exist_ok=True)
+        
+        # Save the file
+        file_path = f"static/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        return {
+            "message": "Map uploaded successfully",
+            "filename": file.filename,
+            "path": f"/static/{file.filename}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
 @app.websocket("/ws/conversation")
 async def websocket_conversation(websocket: WebSocket):
     await websocket.accept()
@@ -331,7 +420,7 @@ async def websocket_conversation(websocket: WebSocket):
                         "When customers ask about store location or address, respond with 'Give me a sec' and then provide the location information."
                     )
                 },
-                "first_message": "Hi! I'm your StorePal assistant at WinMart. I can help you find products, check aisle locations, and make shopping recommendations. What are you looking for today?",
+                "first_message": "Hi! How can I help you today?",
                 "language": "en"
             },
             "custom_llm_extra_body": {
@@ -458,7 +547,7 @@ async def run_testing():
                                 "When customers ask about store location or address, respond with 'Give me a sec' and then provide the location information."
                             )
                         },
-                        "first_message": "Hi! I'm your StorePal assistant at WinMart. I can help you find products, check aisle locations, and make shopping recommendations. What are you looking for today?",
+                        "first_message": "Hi! How can I help you today?",
                         "language": "en"
                     }
                 }
