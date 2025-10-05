@@ -10,10 +10,14 @@ A real-time conversational AI agent powered by ElevenLabs ConvAI API, built with
 - ⚡ WebSocket-based communication for low latency
 - 🎯 Built with FastAPI for robust backend
 - 🔄 Automatic audio format handling (PCM 16kHz)
+- 🌐 Modern React web interface with live transcripts
+- 📱 Responsive design for desktop and mobile
+- 🎨 Beautiful UI with speaking indicators
 
 ## Prerequisites
 
 - Python 3.8 or higher
+- Node.js 14 or higher (for web frontend)
 - Microphone and speakers/headphones
 - ElevenLabs API account with API key and Agent ID
 
@@ -50,6 +54,25 @@ AGENT_ID=your_agent_id_here
 ```
 
 ### 3. Run the Application
+
+#### Option A: Web Frontend (Recommended)
+
+**Terminal 1 - Start API Server:**
+```bash
+cd backend
+python main.py
+```
+
+**Terminal 2 - Start Web Frontend:**
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Open your browser to `http://localhost:3000` and start talking! 🎤
+
+#### Option B: Python Audio Client
 
 **Terminal 1 - Start API Server:**
 ```bash
@@ -88,15 +111,16 @@ Once both the server and audio client are running:
 ```
 ┌─────────────┐         ┌──────────────┐         ┌─────────────────┐
 │             │         │              │         │                 │
-│  Audio      │ ◄─────► │   FastAPI    │ ◄─────► │  ElevenLabs     │
-│  Client     │ WebSocket   Backend    │ WebSocket  ConvAI API     │
-│             │         │              │         │                 │
+│   React     │ ◄─────► │   FastAPI    │ ◄─────► │  ElevenLabs     │
+│  Frontend   │ WebSocket   Backend    │ WebSocket  ConvAI API     │
+│   (Web)     │         │              │         │                 │
 └─────────────┘         └──────────────┘         └─────────────────┘
      ▲  │                                                │  ▲
      │  │                                                │  │
-     │  └─── Audio Capture (Mic)                        │  │
-     └────── Audio Playback (Speaker)  Audio Streaming ─┘  │
-                                       Text Transcription ─┘
+     │  ├─── Live Transcripts                           │  │
+     │  ├─── Speaking Indicator                         │  │
+     │  └─── Audio Capture/Playback   Audio Streaming ──┘  │
+     └────────────────────────────── Text Transcription ───┘
 ```
 
 ## API Endpoints
@@ -120,11 +144,19 @@ Visit `http://localhost:8000/docs` for interactive API documentation!
 ```
 StorePal/
 ├── backend/
-│   ├── main.py             # FastAPI server (run this first)
-│   ├── audio_client.py     # Voice client (run this second)
+│   ├── main.py             # FastAPI server
+│   ├── audio_client.py     # Python voice client
 │   ├── requirements.txt    # Python dependencies
 │   └── .venv/              # Virtual environment (auto-created)
-├── frontend/               # (Future: React/Vue frontend)
+├── frontend/
+│   ├── src/
+│   │   ├── App.js          # Main React component
+│   │   ├── App.css         # Styles
+│   │   └── index.js        # React entry point
+│   ├── public/
+│   │   └── index.html      # HTML template
+│   ├── package.json        # Node dependencies
+│   └── README.md           # Frontend docs
 ├── .env                    # Your API credentials (create this!)
 ├── .env.example            # Template for credentials
 ├── .gitignore             # Git ignore rules
@@ -161,11 +193,18 @@ Restart the server to apply changes.
 
 ## Technologies Used
 
+### Backend
 - **FastAPI** - Modern web framework for building APIs
 - **WebSockets** - Real-time bidirectional communication
 - **PyAudio** - Audio I/O library for Python
 - **ElevenLabs ConvAI** - Advanced conversational AI platform
 - **Python-dotenv** - Environment variable management
+
+### Frontend
+- **React 18** - Modern UI framework
+- **WebSocket API** - Browser real-time communication
+- **MediaRecorder API** - Browser audio recording
+- **Web Audio API** - Audio playback in browser
 
 ## License
 

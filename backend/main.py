@@ -34,9 +34,9 @@ AGENT_ID = os.getenv("ELEVENLABS_AGENT_ID")
 
 if not ELEVENLABS_API_KEY or not AGENT_ID:
     print("\n⚠️  ERROR: Missing credentials!")
-    print("Please create a .env file in the root directory with:")
+    print("Please create a .env file in the backend directory with:")
     print("ELEVENLABS_API_KEY=your_key")
-    print("AGENT_ID=your_agent_id\n")
+    print("ELEVENLABS_AGENT_ID=your_agent_id\n")
     raise ValueError("ELEVENLABS_API_KEY and AGENT_ID must be set in .env file")
 
 
@@ -63,25 +63,47 @@ class ElevenLabsAgent:
             async for message in self.elevenlabs_ws:
                 data = json.loads(message)
                 message_type = data.get("type")
-                print(f"📥 Received: {message_type}")
                 
+                # Forward all messages to client
                 await self.client_ws.send_json(data)
                 
                 if message_type == "conversation_initiation_metadata":
-                    print(f"🎉 Conversation ID: {data.get('conversation_initiation_metadata_event', {}).get('conversation_id')}")
+                    conv_id = data.get('conversation_initiation_metadata_event', {}).get('conversation_id')
+                    print(f"🎉 Conversation ID: {conv_id}")
                 elif message_type == "agent_response":
                     agent_response = data.get("agent_response_event", {}).get("agent_response")
-                    print(f"🤖 Agent: {agent_response}")
+                    print(f"\n🤖 Agent: {agent_response}")
                 elif message_type == "user_transcript":
-                    user_transcript = data.get("user_transcription_event", {}).get("user_transcript")
-                    print(f"👤 User: {user_transcript}")
+                    # Handle both interim and final transcripts
+                    transcript_event = data.get("user_transcription_event", {})
+                    user_transcript = transcript_event.get("user_transcript")
+                    is_final = transcript_event.get("is_final", True)
+                    
+                    if user_transcript:
+                        if is_final:
+                            print(f"\n👤 User: {user_transcript}")
+                        else:
+                            # Print interim transcripts in real-time with carriage return
+                            print(f"\r👤 User (interim): {user_transcript}", end='', flush=True)
+                elif message_type == "interruption":
+                    # ElevenLabs VAD detected user interruption
+                    event_id = data.get("interruption_event", {}).get("event_id")
+                    print(f"\n🛑 Interruption detected by ElevenLabs VAD (event_id: {event_id})")
+                elif message_type == "vad_score":
+                    # Optional: log high VAD scores
+                    vad_score = data.get("vad_score_event", {}).get("vad_score", 0)
+                    if vad_score > 0.8:
+                        print(f"\r🎙️ VAD: {vad_score:.2f}", end='', flush=True)
+                elif message_type == "audio":
+                    # Just forward audio chunks, don't log them
+                    pass
                 elif message_type == "ping":
                     event_id = data.get("ping_event", {}).get("event_id")
                     pong_message = {"type": "pong", "event_id": event_id}
                     await self.elevenlabs_ws.send(json.dumps(pong_message))
                     
         except websockets.exceptions.ConnectionClosed:
-            print("❌ ElevenLabs connection closed")
+            print("\n❌ ElevenLabs connection closed")
             
     async def send_audio_to_elevenlabs(self, audio_base64: str):
         message = {"user_audio_chunk": audio_base64}
@@ -143,9 +165,8 @@ async def websocket_conversation(websocket: WebSocket):
                     
                     if "user_audio_chunk" in data:
                         await agent.send_audio_to_elevenlabs(data["user_audio_chunk"])
-                    elif data.get("type") == "user_message":
-                        await agent.elevenlabs_ws.send(json.dumps(data))
-                    elif data.get("type") == "user_activity":
+                    elif data.get("type") in ["user_message", "user_activity", "pong"]:
+                        # Forward client messages to ElevenLabs
                         await agent.elevenlabs_ws.send(json.dumps(data))
                         
                 elif "bytes" in message:
@@ -261,10 +282,28 @@ async def run_testing():
                             playback_queue.put(audio_bytes)
                     elif message_type == "agent_response":
                         agent_response = data.get("agent_response_event", {}).get("agent_response")
-                        print(f"🤖 Agent: {agent_response}")
+                        print(f"\n🤖 Agent: {agent_response}")
                     elif message_type == "user_transcript":
-                        user_transcript = data.get("user_transcription_event", {}).get("user_transcript")
-                        print(f"👤 You: {user_transcript}")
+                        # Handle both interim and final transcripts
+                        transcript_event = data.get("user_transcription_event", {})
+                        user_transcript = transcript_event.get("user_transcript")
+                        is_final = transcript_event.get("is_final", True)
+                        
+                        if user_transcript:
+                            if is_final:
+                                print(f"\n👤 You: {user_transcript}")
+                            else:
+                                # Print interim transcripts in real-time with carriage return
+                                print(f"\r👤 You (interim): {user_transcript}", end='', flush=True)
+                    elif message_type == "interruption":
+                        # ElevenLabs VAD detected user interruption
+                        event_id = data.get("interruption_event", {}).get("event_id")
+                        print(f"\n🛑 Interruption detected by ElevenLabs VAD (event_id: {event_id})")
+                    elif message_type == "vad_score":
+                        # Optional: log high VAD scores
+                        vad_score = data.get("vad_score_event", {}).get("vad_score", 0)
+                        if vad_score > 0.8:
+                            print(f"\r🎙️ VAD: {vad_score:.2f}", end='', flush=True)
                     elif message_type == "conversation_initiation_metadata":
                         conv_id = data.get("conversation_initiation_metadata_event", {}).get("conversation_id")
                         print(f"🎉 Conversation ID: {conv_id}\n")
@@ -290,5 +329,5 @@ async def run_testing():
 
 
 if __name__ == "__main__":
-    asyncio.run(run_testing())
+    asyncio.run(run_server())
 
