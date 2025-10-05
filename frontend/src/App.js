@@ -546,6 +546,19 @@ function App() {
       <div className="gradient-bg-center"></div>
       <div className="grid-pattern"></div>
 
+      {/* Global Hamburger Menu - positioned at very right of entire window */}
+      <button 
+        className="global-settings-button"
+        onClick={() => setShowDashboard(true)}
+        title="Open Settings"
+      >
+        <div className="hamburger-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+
       <div className="container">
         {/* Chat Section - Left 2/3 */}
         <div className="chat-section">
@@ -570,6 +583,7 @@ function App() {
               </div>
               <h1 className="title">StorePal</h1>
             </div>
+            
             <div className="status-bar">
               <div className={`status-indicator ${connectionStatus}`}>
                 <div className="status-dot"></div>
@@ -581,13 +595,6 @@ function App() {
                   <span>Recording</span>
                 </div>
               )}
-              <button 
-                className="dashboard-toggle"
-                onClick={() => setShowDashboard(true)}
-                title="Open Dashboard"
-              >
-                <span className="dashboard-icon">⚙️</span>
-              </button>
             </div>
           </header>
 
