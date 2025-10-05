@@ -112,6 +112,11 @@ class ElevenLabsAgent:
                 top_n=5
             )
             
+            # Filter out results with very low relevance scores
+            # This helps avoid returning irrelevant products when user asks for something not in inventory
+            min_relevance_score = 0.005  # Lower threshold to allow legitimate results with conversational queries
+            results = [r for r in results if r.score >= min_relevance_score]
+            
             # Log the search
             print(f"🔍 Product search: '{query}' -> {len(results)} results")
             print(f"\n🔍 DEBUG - Results details:")
@@ -153,6 +158,12 @@ class ElevenLabsAgent:
                     conv_id = data.get('conversation_initiation_metadata_event', {}).get('conversation_id')
                     print(f"🎉 Conversation ID: {conv_id}")
                 elif message_type == "agent_response":
+                    # Check if this is a product query that we're handling
+                    if hasattr(self, '_handling_product_query') and self._handling_product_query:
+                        print(f"\n🤖 Agent: [SKIPPED - Product query being handled]")
+                        self._handling_product_query = False
+                        continue
+                    
                     agent_response = data.get("agent_response_event", {}).get("agent_response")
                     print(f"\n🤖 Agent: {agent_response}")
                 elif message_type == "user_transcript":
@@ -167,10 +178,35 @@ class ElevenLabsAgent:
                             
                             # Check if this is a product query and search if needed
                             if self.should_search_products(user_transcript):
+                                print(f"🔍 Triggering product search...")
+                                # Mark that we're handling a product query
+                                self._handling_product_query = True
+                                
                                 product_info = await self.search_products(user_transcript)
                                 
-                                # Send product information as additional context
-                                # This can be displayed in the UI or used by the agent
+                                # Send contextual update to ElevenLabs with database results
+                                # Only send if we have relevant results, not if we couldn't find anything
+                                if product_info and "couldn't find" not in product_info.lower() and "no products" not in product_info.lower():
+                                    # Send contextual update to ElevenLabs with database results
+                                    contextual_update = {
+                                        "type": "contextual_update",
+                                        "text": f"IMPORTANT: Use these exact database results to answer the user's question: {product_info}"
+                                    }
+                                    await self.elevenlabs_ws.send(json.dumps(contextual_update))
+                                    print(f"📤 Sent database results as contextual update to ElevenLabs")
+                                    
+                                    # Add a small delay to ensure the contextual update is processed
+                                    await asyncio.sleep(0.2)
+                                    
+                                    # Send a follow-up message to trigger the agent response
+                                    follow_up = {
+                                        "type": "user_message",
+                                        "text": f"Please respond with the database results I just provided: {product_info}"
+                                    }
+                                    await self.elevenlabs_ws.send(json.dumps(follow_up))
+                                    print(f"📤 Sent follow-up message to trigger response")
+                                
+                                # Also send to client for UI display
                                 await self.client_ws.send_json({
                                     "type": "product_search_result",
                                     "query": user_transcript,
@@ -272,9 +308,13 @@ async def websocket_conversation(websocket: WebSocket):
         product_search_info = ""
         if vector_search:
             product_search_info = (
-                " I have access to our complete WinMart inventory database with over 500 products "
-                "across categories like Produce, Dairy, Frozen, Meat, Bakery, and more. "
-                "I can help you find products, tell you their exact aisle locations, and provide descriptions."
+                " IMPORTANT: When you receive contextual updates with database search results, "
+                "you MUST use the EXACT information provided in those updates. "
+                "Do not make up aisle locations or product information. "
+                "Always use the specific aisle codes (like A1, B2, N3) from the database results. "
+                "When you receive a contextual update, respond immediately with that exact information. "
+                "If no relevant products are found in our inventory, politely inform the customer that we don't carry that item "
+                "and suggest they check other stores or ask if there's something similar we do carry."
             )
         
         config_override = {
@@ -285,11 +325,18 @@ async def websocket_conversation(websocket: WebSocket):
                         "When customers ask about products, provide specific information including the product name, "
                         "category, aisle location, and description. Be friendly, helpful, and concise. "
                         "If asked about product locations, always mention the aisle number clearly. "
-                        "Help customers with shopping lists, product recommendations, and store navigation."
+                        "Help customers with shopping lists, product recommendations, and store navigation. "
+                        "IMPORTANT: When you receive contextual updates with database search results, use that exact information to respond. "
+                        "If we don't carry a specific product the customer is looking for, politely inform them and suggest alternatives if available. "
+                        "When customers ask about store location or address, respond with 'Give me a sec' and then provide the location information."
                     )
                 },
                 "first_message": "Hi! I'm your StorePal assistant at WinMart. I can help you find products, check aisle locations, and make shopping recommendations. What are you looking for today?",
                 "language": "en"
+            },
+            "custom_llm_extra_body": {
+                "temperature": 0.3,
+                "max_tokens": 200
             }
         }
         await agent.send_initiation_message(config_override)
@@ -407,7 +454,8 @@ async def run_testing():
                                 "When customers ask about products, provide specific information including the product name, "
                                 "category, aisle location, and description. Be friendly, helpful, and concise. "
                                 "If asked about product locations, always mention the aisle number clearly. "
-                                "Help customers with shopping lists, product recommendations, and store navigation."
+                                "Help customers with shopping lists, product recommendations, and store navigation. "
+                                "When customers ask about store location or address, respond with 'Give me a sec' and then provide the location information."
                             )
                         },
                         "first_message": "Hi! I'm your StorePal assistant at WinMart. I can help you find products, check aisle locations, and make shopping recommendations. What are you looking for today?",
