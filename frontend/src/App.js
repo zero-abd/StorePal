@@ -10,6 +10,8 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [showMap, setShowMap] = useState(false);
   const [mapControls, setMapControls] = useState(null);
+  const [pendingAisles, setPendingAisles] = useState([]);
+  const [userFinishedSpeaking, setUserFinishedSpeaking] = useState(false);
   
   const wsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -100,6 +102,14 @@ function App() {
         
         if (userText) {
           updateOrAddUserTranscript(userText, !isFinal);
+          
+          // Track when user finishes speaking
+          if (isFinal) {
+            setUserFinishedSpeaking(true);
+            console.log('🗺️ User finished speaking, will hide map if visible');
+          } else {
+            setUserFinishedSpeaking(false);
+          }
         }
         break;
         
@@ -184,19 +194,40 @@ function App() {
 
   const checkForAisleMention = (text) => {
     // Regular expression to match aisle patterns like A5, K10, S3, etc.
+    // Also handle "A two", "F eight" format
     const aislePattern = /\b([A-Z]\d{1,2})\b/g;
-    const matches = text.match(aislePattern);
+    const wordPattern = /\b([A-Z])\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen)\b/gi;
     
-    if (matches && matches.length > 0) {
-      console.log('🗺️ Aisle mentioned:', matches);
+    const matches = text.match(aislePattern);
+    const wordMatches = text.match(wordPattern);
+    
+    console.log('🔍 Checking text for aisles:', text);
+    console.log('🔍 Pattern matches:', matches);
+    console.log('🔍 Word pattern matches:', wordMatches);
+    
+    let allMatches = [];
+    if (matches) allMatches = [...allMatches, ...matches];
+    if (wordMatches) {
+      // Convert word format to letter format
+      const converted = wordMatches.map(match => {
+        const [letter, word] = match.split(' ');
+        const wordToNum = {
+          'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
+          'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10',
+          'eleven': '11', 'twelve': '12', 'thirteen': '13', 'fourteen': '14',
+          'fifteen': '15', 'sixteen': '16', 'seventeen': '17'
+        };
+        return letter.toUpperCase() + wordToNum[word.toLowerCase()];
+      });
+      allMatches = [...allMatches, ...converted];
+    }
+    
+    if (allMatches.length > 0) {
+      console.log('🗺️ Aisle mentioned:', allMatches);
+      console.log('🗺️ Setting showMap to true');
       setShowMap(true);
-      
-      // Add pins for mentioned aisles
-      if (mapControls) {
-        matches.forEach(aisle => {
-          mapControls.addPin(aisle, '#ef4444'); // Red pin for mentioned aisles
-        });
-      }
+      setPendingAisles(allMatches);
+      setUserFinishedSpeaking(false); // Reset the speaking state when map is shown
     }
   };
 
@@ -204,8 +235,32 @@ function App() {
     setMapControls(controls);
   };
 
+  // Handle pending aisles when map controls are available
+  useEffect(() => {
+    if (mapControls && pendingAisles.length > 0) {
+      console.log('🗺️ Adding pins for pending aisles:', pendingAisles);
+      pendingAisles.forEach(aisle => {
+        mapControls.addPin(aisle, '#ef4444'); // Red pin for mentioned aisles
+      });
+      setPendingAisles([]); // Clear pending aisles
+    }
+  }, [mapControls, pendingAisles]);
+
+  // Hide map when user finishes speaking
+  useEffect(() => {
+    if (userFinishedSpeaking && showMap) {
+      console.log('🗺️ User finished speaking, hiding map');
+      setTimeout(() => {
+        setShowMap(false);
+        setPendingAisles([]); // Clear any pending aisles
+        addSystemMessage('🗺️ Map minimized - will show again if you ask about store locations');
+      }, 500); // Give a bit more time for the user to see their question was processed
+    }
+  }, [userFinishedSpeaking, showMap]);
+
   const toggleMap = () => {
     setShowMap(!showMap);
+    setUserFinishedSpeaking(false); // Reset speaking state when manually toggling
   };
 
   const stopAudioPlayback = () => {
@@ -487,6 +542,16 @@ function App() {
             )}
           </div>
 
+          {/* Store Map - Show in chat area when needed */}
+          {showMap && (
+            <div className="map-in-chat">
+              <StoreMap 
+                showMap={showMap} 
+                onAislePin={handleMapControls}
+              />
+            </div>
+          )}
+
           <div className="controls">
             {!isConnected ? (
               <button 
@@ -513,6 +578,17 @@ function App() {
                   <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
                 </button>
                 <button 
+                  className="control-btn test-btn"
+                  onClick={() => {
+                    console.log('🧪 Test button clicked');
+                    setShowMap(true);
+                    setPendingAisles(['A2', 'F8']);
+                  }}
+                >
+                  <span className="btn-icon">🧪</span>
+                  <span>Test Map</span>
+                </button>
+                <button 
                   className="control-btn disconnect-btn" 
                   onClick={disconnect}
                 >
@@ -525,34 +601,27 @@ function App() {
 
         {/* Animation Section - Right 1/3 */}
         <div className="animation-section">
-          {showMap ? (
-            <StoreMap 
-              showMap={showMap} 
-              onAislePin={handleMapControls}
-            />
-          ) : (
-            <div className="voice-animation">
-              <div className="voice-orb-container">
-                <div className={`voice-orb ${isRecording ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
-                  <div className="siri-waves">
-                    {/* Generate 24 radial lines in all directions (every 15 degrees) */}
-                    {Array.from({ length: 24 }).map((_, index) => (
-                      <div key={index} className="siri-wave-line" style={{ '--angle': `${index * 15}deg`, '--index': index }}></div>
-                    ))}
-                  </div>
-                  <div className="galaxy-ring ring-1"></div>
-                  <div className="galaxy-ring ring-2"></div>
-                  <div className="galaxy-ring ring-3"></div>
+          <div className="voice-animation">
+            <div className="voice-orb-container">
+              <div className={`voice-orb ${isRecording ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
+                <div className="siri-waves">
+                  {/* Generate 24 radial lines in all directions (every 15 degrees) */}
+                  {Array.from({ length: 24 }).map((_, index) => (
+                    <div key={index} className="siri-wave-line" style={{ '--angle': `${index * 15}deg`, '--index': index }}></div>
+                  ))}
                 </div>
+                <div className="galaxy-ring ring-1"></div>
+                <div className="galaxy-ring ring-2"></div>
+                <div className="galaxy-ring ring-3"></div>
               </div>
-              {(isRecording || isSpeaking) && (
-                <div className="animation-status">
-                  {isRecording && !isSpeaking ? '🎤 Listening...' : ''}
-                  {isSpeaking ? '🔊 Speaking...' : ''}
-                </div>
-              )}
             </div>
-          )}
+            {(isRecording || isSpeaking) && (
+              <div className="animation-status">
+                {isRecording && !isSpeaking ? '🎤 Listening...' : ''}
+                {isSpeaking ? '🔊 Speaking...' : ''}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
