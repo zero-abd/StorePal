@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+import StoreMap from './StoreMap';
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -7,6 +8,8 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcripts, setTranscripts] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [showMap, setShowMap] = useState(false);
+  const [mapControls, setMapControls] = useState(null);
   
   const wsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -105,6 +108,8 @@ function App() {
         console.log('🤖 Agent said:', agentText);
         if (agentText) {
           addTranscript('agent', agentText);
+          // Check if agent mentioned an aisle and show map
+          checkForAisleMention(agentText);
         }
         break;
         
@@ -175,6 +180,32 @@ function App() {
 
   const addSystemMessage = (text) => {
     setTranscripts(prev => [...prev, { speaker: 'system', text, timestamp: new Date() }]);
+  };
+
+  const checkForAisleMention = (text) => {
+    // Regular expression to match aisle patterns like A5, K10, S3, etc.
+    const aislePattern = /\b([A-Z]\d{1,2})\b/g;
+    const matches = text.match(aislePattern);
+    
+    if (matches && matches.length > 0) {
+      console.log('🗺️ Aisle mentioned:', matches);
+      setShowMap(true);
+      
+      // Add pins for mentioned aisles
+      if (mapControls) {
+        matches.forEach(aisle => {
+          mapControls.addPin(aisle, '#ef4444'); // Red pin for mentioned aisles
+        });
+      }
+    }
+  };
+
+  const handleMapControls = (controls) => {
+    setMapControls(controls);
+  };
+
+  const toggleMap = () => {
+    setShowMap(!showMap);
   };
 
   const stopAudioPlayback = () => {
@@ -475,6 +506,13 @@ function App() {
                   <span>{isRecording ? 'Stop' : 'Start'}</span>
                 </button>
                 <button 
+                  className={`control-btn map-btn ${showMap ? 'active' : ''}`}
+                  onClick={toggleMap}
+                >
+                  <span className="btn-icon">🗺️</span>
+                  <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
+                </button>
+                <button 
                   className="control-btn disconnect-btn" 
                   onClick={disconnect}
                 >
@@ -487,27 +525,34 @@ function App() {
 
         {/* Animation Section - Right 1/3 */}
         <div className="animation-section">
-          <div className="voice-animation">
-            <div className="voice-orb-container">
-              <div className={`voice-orb ${isRecording ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
-                <div className="siri-waves">
-                  {/* Generate 24 radial lines in all directions (every 15 degrees) */}
-                  {Array.from({ length: 24 }).map((_, index) => (
-                    <div key={index} className="siri-wave-line" style={{ '--angle': `${index * 15}deg`, '--index': index }}></div>
-                  ))}
+          {showMap ? (
+            <StoreMap 
+              showMap={showMap} 
+              onAislePin={handleMapControls}
+            />
+          ) : (
+            <div className="voice-animation">
+              <div className="voice-orb-container">
+                <div className={`voice-orb ${isRecording ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
+                  <div className="siri-waves">
+                    {/* Generate 24 radial lines in all directions (every 15 degrees) */}
+                    {Array.from({ length: 24 }).map((_, index) => (
+                      <div key={index} className="siri-wave-line" style={{ '--angle': `${index * 15}deg`, '--index': index }}></div>
+                    ))}
+                  </div>
+                  <div className="galaxy-ring ring-1"></div>
+                  <div className="galaxy-ring ring-2"></div>
+                  <div className="galaxy-ring ring-3"></div>
                 </div>
-                <div className="galaxy-ring ring-1"></div>
-                <div className="galaxy-ring ring-2"></div>
-                <div className="galaxy-ring ring-3"></div>
               </div>
+              {(isRecording || isSpeaking) && (
+                <div className="animation-status">
+                  {isRecording && !isSpeaking ? '🎤 Listening...' : ''}
+                  {isSpeaking ? '🔊 Speaking...' : ''}
+                </div>
+              )}
             </div>
-            {(isRecording || isSpeaking) && (
-              <div className="animation-status">
-                {isRecording && !isSpeaking ? '🎤 Listening...' : ''}
-                {isSpeaking ? '🔊 Speaking...' : ''}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
