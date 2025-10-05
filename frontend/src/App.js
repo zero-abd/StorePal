@@ -385,76 +385,129 @@ function App() {
 
   return (
     <div className="app">
+      {/* Background gradients */}
+      <div className="gradient-bg-top-left"></div>
+      <div className="gradient-bg-bottom-right"></div>
+      <div className="gradient-bg-center"></div>
+      <div className="grid-pattern"></div>
+
       <div className="container">
-        <header className="header">
-          <h1 className="title">StorePal AI Assistant</h1>
-          <div className="status-bar">
-            <div className={`status-indicator ${connectionStatus}`}>
-              <div className="status-dot"></div>
-              <span>{connectionStatus}</span>
+        {/* Chat Section - Left 2/3 */}
+        <div className="chat-section">
+          <header className="header">
+            <div className="logo-container">
+              <div className="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="url(#gradient1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 22V12H15V22" stroke="url(#gradient1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="9" r="2" fill="url(#gradient2)"/>
+                  <defs>
+                    <linearGradient id="gradient1" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#3b82f6"/>
+                      <stop offset="1" stopColor="#8b5cf6"/>
+                    </linearGradient>
+                    <linearGradient id="gradient2" x1="10" y1="7" x2="14" y2="11" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#60a5fa"/>
+                      <stop offset="1" stopColor="#a78bfa"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <h1 className="title">StorePal</h1>
             </div>
-            {isSpeaking && (
-              <div className="speaking-indicator">
-                <div className="pulse"></div>
-                <span>AI Speaking</span>
+            <div className="status-bar">
+              <div className={`status-indicator ${connectionStatus}`}>
+                <div className="status-dot"></div>
+                <span>{connectionStatus}</span>
+              </div>
+              {isRecording && (
+                <div className="status-indicator" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626' }}>
+                  <div className="pulse" style={{ background: '#ef4444' }}></div>
+                  <span>Recording</span>
+                </div>
+              )}
+            </div>
+          </header>
+
+          <div className="transcript-container">
+            {transcripts.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">💬</div>
+                <p>Connect and start speaking to begin your conversation with StorePal AI</p>
+              </div>
+            ) : (
+              <div className="transcript-list">
+                {transcripts.map((item, index) => (
+                  <div key={index} className={`transcript-item ${item.speaker} ${item.isInterim ? 'interim' : ''}`}>
+                    <div className="transcript-header">
+                      <span className="speaker-label">
+                        {item.speaker === 'user' ? '👤 You' : 
+                         item.speaker === 'agent' ? '🤖 AI' : 
+                         '⚙️ System'}
+                        {item.isInterim && <span className="interim-badge"> (speaking...)</span>}
+                      </span>
+                      <span className="timestamp">{formatTime(item.timestamp)}</span>
+                    </div>
+                    <div className="transcript-text">{item.text}</div>
+                  </div>
+                ))}
+                <div ref={transcriptEndRef} />
               </div>
             )}
           </div>
-        </header>
 
-        <div className="transcript-container">
-          {transcripts.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">💬</div>
-              <p>Connect and start speaking to begin your conversation</p>
-            </div>
-          ) : (
-            <div className="transcript-list">
-              {transcripts.map((item, index) => (
-                <div key={index} className={`transcript-item ${item.speaker} ${item.isInterim ? 'interim' : ''}`}>
-                  <div className="transcript-header">
-                    <span className="speaker-label">
-                      {item.speaker === 'user' ? '👤 You' : 
-                       item.speaker === 'agent' ? '🤖 AI' : 
-                       '⚙️ System'}
-                      {item.isInterim && <span className="interim-badge"> (speaking...)</span>}
-                    </span>
-                    <span className="timestamp">{formatTime(item.timestamp)}</span>
-                  </div>
-                  <div className="transcript-text">{item.text}</div>
-                </div>
-              ))}
-              <div ref={transcriptEndRef} />
-            </div>
-          )}
+          <div className="controls">
+            {!isConnected ? (
+              <button 
+                className="control-btn connect-btn" 
+                onClick={connectWebSocket}
+                disabled={connectionStatus === 'connecting'}
+              >
+                {connectionStatus === 'connecting' ? 'Connecting...' : 'Connect'}
+              </button>
+            ) : (
+              <>
+                <button 
+                  className={`control-btn mic-btn ${isRecording ? 'recording' : ''}`}
+                  onClick={toggleRecording}
+                >
+                  <span className="btn-icon">{isRecording ? '🎤' : '🎙️'}</span>
+                  <span>{isRecording ? 'Stop' : 'Start'}</span>
+                </button>
+                <button 
+                  className="control-btn disconnect-btn" 
+                  onClick={disconnect}
+                >
+                  Disconnect
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="controls">
-          {!isConnected ? (
-            <button 
-              className="control-btn connect-btn" 
-              onClick={connectWebSocket}
-              disabled={connectionStatus === 'connecting'}
-            >
-              {connectionStatus === 'connecting' ? 'Connecting...' : 'Connect'}
-            </button>
-          ) : (
-            <>
-              <button 
-                className={`control-btn mic-btn ${isRecording ? 'recording' : ''}`}
-                onClick={toggleRecording}
-              >
-                <span className="btn-icon">{isRecording ? '🎤' : '🎙️'}</span>
-                <span>{isRecording ? 'Stop Recording' : 'Start Recording'}</span>
-              </button>
-              <button 
-                className="control-btn disconnect-btn" 
-                onClick={disconnect}
-              >
-                Disconnect
-              </button>
-            </>
-          )}
+        {/* Animation Section - Right 1/3 */}
+        <div className="animation-section">
+          <div className="voice-animation">
+            <div className="voice-orb-container">
+              <div className={`voice-orb ${isRecording ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
+                <div className="siri-waves">
+                  {/* Generate 24 radial lines in all directions (every 15 degrees) */}
+                  {Array.from({ length: 24 }).map((_, index) => (
+                    <div key={index} className="siri-wave-line" style={{ '--angle': `${index * 15}deg`, '--index': index }}></div>
+                  ))}
+                </div>
+                <div className="galaxy-ring ring-1"></div>
+                <div className="galaxy-ring ring-2"></div>
+                <div className="galaxy-ring ring-3"></div>
+              </div>
+            </div>
+            {(isRecording || isSpeaking) && (
+              <div className="animation-status">
+                {isRecording && !isSpeaking ? '🎤 Listening...' : ''}
+                {isSpeaking ? '🔊 Speaking...' : ''}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
