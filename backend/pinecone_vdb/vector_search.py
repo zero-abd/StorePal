@@ -5,10 +5,18 @@ Supports semantic search, filtering, and reranking.
 """
 
 import os
+import sys
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from dotenv import load_dotenv
 from pinecone import Pinecone
+
+# Fix Windows console encoding for emojis
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
 
 load_dotenv()
 
@@ -73,9 +81,14 @@ class VectorSearchEngine:
         
         # Initialize Pinecone client
         self.pc = Pinecone(api_key=self.api_key)
-        self.index = self.pc.Index(self.index_name)
         
-        print(f"✅ VectorSearchEngine initialized with index '{self.index_name}'")
+        # Get the index
+        try:
+            self.index = self.pc.Index(self.index_name)
+            print(f"✅ VectorSearchEngine initialized with index '{self.index_name}'")
+        except Exception as e:
+            print(f"❌ Error initializing index: {e}")
+            raise
     
     def _parse_hits(self, hits: List[Dict]) -> List[SearchResult]:
         """
@@ -89,27 +102,22 @@ class VectorSearchEngine:
         """
         results = []
         for i, hit in enumerate(hits):
-            print(f"\n🔍 DEBUG - Hit {i+1}:")
-            print(f"  Raw hit keys: {hit.keys()}")
-            print(f"  Full hit: {hit}")
+            # Access hit as dict-like object (not calling .keys())
+            fields = hit.get('fields', {}) if hasattr(hit, 'get') else hit.get('fields', {}) if isinstance(hit, dict) else {}
             
-            fields = hit.get('fields', {})
-            print(f"  Fields: {fields}")
-            
-            # Also check for metadata (another common structure)
-            metadata = hit.get('metadata', {})
-            print(f"  Metadata: {metadata}")
+            # Handle both dict and object access
+            if not fields and hasattr(hit, '__getitem__'):
+                fields = hit['fields'] if 'fields' in hit else {}
             
             result = SearchResult(
-                product_id=fields.get('product_id', 0),
+                product_id=int(fields.get('product_id', 0)) if fields.get('product_id') else 0,
                 item_name=fields.get('item_name', ''),
                 category=fields.get('category', ''),
                 description=fields.get('description', ''),
                 aisle_location=fields.get('aisle_location', ''),
-                score=hit.get('_score', 0.0),
+                score=hit.get('_score', 0.0) if hasattr(hit, 'get') else hit['_score'] if '_score' in hit else 0.0,
                 chunk_text=fields.get('chunk_text', '')
             )
-            print(f"  Parsed result: {result}")
             results.append(result)
         return results
     
@@ -142,12 +150,12 @@ class VectorSearchEngine:
                 }
             )
             
-            # Parse results
-            print(f"\n🔍 DEBUG - semantic_search - Raw response keys: {response.keys()}")
-            print(f"🔍 DEBUG - semantic_search - Full response: {response}")
-            
-            hits = response.get('result', {}).get('hits', [])
-            print(f"🔍 DEBUG - semantic_search - Number of hits: {len(hits)}")
+            # Parse results - handle SearchRecordsResponse object
+            if isinstance(response, dict):
+                hits = response.get('result', {}).get('hits', [])
+            else:
+                # Handle SearchRecordsResponse object
+                hits = response['result']['hits'] if 'result' in response else []
             results = self._parse_hits(hits)
             
             # Filter by minimum score if specified
@@ -158,6 +166,8 @@ class VectorSearchEngine:
             
         except Exception as e:
             print(f"❌ Error during semantic search: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def search_with_filter(
@@ -245,18 +255,20 @@ class VectorSearchEngine:
                 }
             )
             
-            # Parse results
-            print(f"\n🔍 DEBUG - search_with_reranking - Raw response keys: {response.keys()}")
-            print(f"🔍 DEBUG - search_with_reranking - Full response: {response}")
-            
-            hits = response.get('result', {}).get('hits', [])
-            print(f"🔍 DEBUG - search_with_reranking - Number of hits: {len(hits)}")
+            # Parse results - handle SearchRecordsResponse object
+            if isinstance(response, dict):
+                hits = response.get('result', {}).get('hits', [])
+            else:
+                # Handle SearchRecordsResponse object
+                hits = response['result']['hits'] if 'result' in response else []
             results = self._parse_hits(hits)
             
             return results
             
         except Exception as e:
             print(f"❌ Error during reranked search: {e}")
+            import traceback
+            traceback.print_exc()
             # Fallback to regular search
             return self.semantic_search(query, top_k=top_n)
     
