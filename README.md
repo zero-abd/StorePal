@@ -4,6 +4,59 @@
 
 A comprehensive AI-powered shopping assistant that combines voice interaction, interactive store mapping, and intelligent product search to revolutionize the in-store shopping experience. Built with ElevenLabs ConvAI API, Pinecone Vector Database, FastAPI, and React.
 
+## 🎯 Problem Statement
+
+When new incoming students or residents visit local Walmart stores or any superstore, they often face a frustrating shopping experience:
+
+- **Lost and Confused**: Navigating large stores with thousands of products across multiple aisles can be overwhelming
+- **Time Wasted**: Customers spend valuable time wandering around trying to locate specific items
+- **Limited Help**: Finding store employees for assistance is often difficult, especially during peak hours
+- **Language Barriers**: International students and new residents may struggle to communicate their needs
+- **Inefficient Shopping**: The traditional "search and wander" approach leads to longer shopping trips and reduced customer satisfaction
+
+## 💡 Our Solution
+
+StorePal revolutionizes the in-store shopping experience with a comprehensive suite of features:
+
+### 🎤 Voice-First Interface
+- **Natural Conversation**: Speak naturally and get instant, accurate product location information
+- **Real-time Transcription**: See your words transcribed live as you speak
+- **Audio Responses**: Hear clear, spoken directions and product information
+- **Multilingual Support**: Break language barriers with AI-powered understanding
+
+### 🗺️ Interactive Store Mapping
+- **Visual Navigation**: Interactive store map with real-time product location pins
+- **Aisle Highlighting**: Products are highlighted on the map with color-coded pins
+- **Smart Routing**: Get visual guidance to your desired products
+- **Department Overview**: Navigate by store sections and departments
+
+### 📊 Intelligent Dashboard
+- **Product Analytics**: View detailed product information and availability
+- **Search History**: Track your previous searches and recommendations
+- **Store Insights**: Get insights about store layout and popular products
+
+### 🔍 Advanced Search
+- **Semantic Search**: Powered by Pinecone vector database for intelligent product matching
+- **Natural Language**: Ask questions like "Where can I find organic almond milk?" and get precise aisle and section information
+- **Context Awareness**: Understand vague descriptions and provide relevant suggestions
+
+Simply walk up to a kiosk, ask "Where can I find organic almond milk?" and get both spoken directions and visual map guidance instantly!
+
+## 🎥 Demo Video
+
+[![StorePal Demo](https://img.youtube.com/vi/rxeN7fq5p6w/maxresdefault.jpg)](https://youtu.be/rxeN7fq5p6w)
+
+*Click the thumbnail above to watch our StorePal demo video!*
+
+## 🗺️ UI Example
+### Home Page Kiosk
+<img width="1699" height="981" alt="home_page" src="https://github.com/user-attachments/assets/b5119b94-9769-40f2-80df-f178acfededd" />
+
+### Map Page Kiosk
+<img width="1698" height="977" alt="map_page" src="https://github.com/user-attachments/assets/9a78d8d4-77fe-4631-9a9b-d994ecb54e7e" />
+
+
+
 ## 🏗️ Technical Architecture & Design Decisions
 
 ### Why These Technologies?
@@ -78,57 +131,6 @@ AI responds: "I found milk in the dairy section, aisle 7. Let me show you on the
 3. **User Experience**: Natural conversation with instant visual feedback
 4. **Accuracy**: Semantic search finds products even with vague descriptions
 5. **Flexibility**: Function calling allows complex multi-step interactions
-
-## 🎯 Problem Statement
-
-When new incoming students or residents visit local Walmart stores or any superstore, they often face a frustrating shopping experience:
-
-- **Lost and Confused**: Navigating large stores with thousands of products across multiple aisles can be overwhelming
-- **Time Wasted**: Customers spend valuable time wandering around trying to locate specific items
-- **Limited Help**: Finding store employees for assistance is often difficult, especially during peak hours
-- **Language Barriers**: International students and new residents may struggle to communicate their needs
-- **Inefficient Shopping**: The traditional "search and wander" approach leads to longer shopping trips and reduced customer satisfaction
-
-## 💡 Our Solution
-
-StorePal revolutionizes the in-store shopping experience with a comprehensive suite of features:
-
-### 🎤 Voice-First Interface
-- **Natural Conversation**: Speak naturally and get instant, accurate product location information
-- **Real-time Transcription**: See your words transcribed live as you speak
-- **Audio Responses**: Hear clear, spoken directions and product information
-- **Multilingual Support**: Break language barriers with AI-powered understanding
-
-### 🗺️ Interactive Store Mapping
-- **Visual Navigation**: Interactive store map with real-time product location pins
-- **Aisle Highlighting**: Products are highlighted on the map with color-coded pins
-- **Smart Routing**: Get visual guidance to your desired products
-- **Department Overview**: Navigate by store sections and departments
-
-### 📊 Intelligent Dashboard
-- **Product Analytics**: View detailed product information and availability
-- **Search History**: Track your previous searches and recommendations
-- **Store Insights**: Get insights about store layout and popular products
-
-### 🔍 Advanced Search
-- **Semantic Search**: Powered by Pinecone vector database for intelligent product matching
-- **Natural Language**: Ask questions like "Where can I find organic almond milk?" and get precise aisle and section information
-- **Context Awareness**: Understand vague descriptions and provide relevant suggestions
-
-Simply walk up to a kiosk, ask "Where can I find organic almond milk?" and get both spoken directions and visual map guidance instantly!
-
-## 🎥 Demo Video
-
-[![StorePal Demo](https://img.youtube.com/vi/rxeN7fq5p6w/maxresdefault.jpg)](https://youtu.be/rxeN7fq5p6w)
-
-*Click the thumbnail above to watch our StorePal demo video!*
-
-## 🗺️ UI Example
-### Home Page Kiosk
-<img width="1699" height="981" alt="home_page" src="https://github.com/user-attachments/assets/b5119b94-9769-40f2-80df-f178acfededd" />
-
-### Map Page Kiosk
-<img width="1698" height="977" alt="map_page" src="https://github.com/user-attachments/assets/9a78d8d4-77fe-4631-9a9b-d994ecb54e7e" />
 
 ## ✨ Features
 
