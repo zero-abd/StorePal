@@ -2,569 +2,191 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import StoreMap from './StoreMap';
 import Dashboard from './Dashboard';
+import KeyPanel from './KeyPanel';
+import {
+  loadCatalog,
+  keywordSearch,
+  semanticSearch,
+  isCatalogIndexed,
+  answerFor,
+} from './search';
+import { getSpeechRecognition, speak, stopSpeaking } from './voice';
+
+const EXAMPLES = [
+  'Where can I find almond milk?',
+  'Where is the dog food?',
+  'I need batteries',
+  'peanut butter',
+];
 
 function App() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcripts, setTranscripts] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [showMap, setShowMap] = useState(false);
-  const [mapControls, setMapControls] = useState(null);
-  const [pendingAisles, setPendingAisles] = useState([]);
-  const [userFinishedSpeaking, setUserFinishedSpeaking] = useState(false);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakAnswers, setSpeakAnswers] = useState(true);
+  const [showMap, setShowMap] = useState(true);
+  const [highlights, setHighlights] = useState([]);
   const [showDashboard, setShowDashboard] = useState(false);
-  
-  const wsRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const playbackContextRef = useRef(null);
+  const [showKeys, setShowKeys] = useState(false);
+  // Keys are held in memory only, never written to storage.
+  const [keys, setKeys] = useState({ openai: '', elevenlabs: '' });
+
+  const recognitionRef = useRef(null);
   const transcriptEndRef = useRef(null);
-  const audioQueueRef = useRef([]);
-  const isPlayingRef = useRef(false);
-  const currentAudioSourceRef = useRef(null);
-
-  const WS_URL = 'ws://localhost:8000/ws/conversation';
+  const nextId = useRef(0);
+  const SpeechRecognition = getSpeechRecognition();
 
   useEffect(() => {
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      stopRecording();
-    };
-  }, []);
-
-  useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [transcripts]);
 
-  const connectWebSocket = () => {
-    setConnectionStatus('connecting');
-    
-    const ws = new WebSocket(WS_URL);
-    
-    ws.onopen = () => {
-      console.log('✅ Connected to server');
-      setIsConnected(true);
-      setConnectionStatus('connected');
-      
-      if (!playbackContextRef.current) {
-        playbackContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
-          sampleRate: 16000
-        });
-        console.log('🔊 Pre-initialized audio context for low-latency playback');
-      }
+  useEffect(() => {
+    loadCatalog().catch(() => {});
+    return () => {
+      recognitionRef.current?.abort();
+      stopSpeaking();
     };
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('📥 Received:', data.type);
-        handleServerMessage(data);
-      } catch (error) {
-        console.error('❌ Error parsing message:', error);
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-      setConnectionStatus('error');
-    };
-    
-    ws.onclose = () => {
-      console.log('🔌 Disconnected from server');
-      setIsConnected(false);
-      setConnectionStatus('disconnected');
-      stopRecording();
-      // Clear conversation history on disconnect
-      setTranscripts(prev => [...prev, { speaker: 'system', text: 'Conversation history cleared.', timestamp: new Date() }]);
-      setShowMap(false);
-      setPendingAisles([]);
-      setUserFinishedSpeaking(false);
-    };
-    
-    wsRef.current = ws;
-  };
-
-  const handleServerMessage = (data) => {
-    const messageType = data.type;
-    
-    switch (messageType) {
-      case 'conversation_initiation_metadata':
-        const convId = data.conversation_initiation_metadata_event?.conversation_id;
-        console.log('🎉 Conversation started:', convId);
-        break;
-        
-      case 'user_transcript':
-        const transcriptEvent = data.user_transcription_event || {};
-        const userText = transcriptEvent.user_transcript;
-        const isFinal = transcriptEvent.is_final !== false;
-        
-        console.log(`👤 User ${isFinal ? '(final)' : '(interim)'}:`, userText);
-        
-        if (userText) {
-          updateOrAddUserTranscript(userText, !isFinal);
-          
-          // Track when user finishes speaking
-          if (isFinal) {
-            setUserFinishedSpeaking(true);
-            console.log('🗺️ User finished speaking, will hide map if visible');
-          } else {
-            setUserFinishedSpeaking(false);
-          }
-        }
-        break;
-        
-      case 'agent_response':
-        const agentText = data.agent_response_event?.agent_response;
-        console.log('🤖 Agent said:', agentText);
-        if (agentText) {
-          addTranscript('agent', agentText);
-          // Check if agent mentioned an aisle and show map
-          console.log('🔍 About to check for aisle mention in:', agentText);
-          checkForAisleMention(agentText);
-        }
-        break;
-        
-      case 'audio':
-        const audioBase64 = data.audio_event?.audio_base_64;
-        if (audioBase64) {
-          // Always queue audio - ElevenLabs won't send audio if user is speaking
-          // The interruption event will clear the queue if needed
-          queueAudio(audioBase64);
-        }
-        break;
-        
-      case 'interruption':
-        // ElevenLabs detected user interruption with its VAD
-        const interruptionEventId = data.interruption_event?.event_id;
-        const isCurrentlyPlaying = isPlayingRef.current || audioQueueRef.current.length > 0;
-        
-        if (isCurrentlyPlaying) {
-          console.log('🛑 ElevenLabs VAD detected interruption (event_id:', interruptionEventId, ') - Stopping playback');
-          stopAudioPlayback();
-        } else {
-          console.log('⚠️ Interruption detected but no audio playing yet (event_id:', interruptionEventId, ') - Ignoring');
-        }
-        break;
-        
-      case 'vad_score':
-        // Optional: log VAD scores to see how ElevenLabs is detecting speech
-        const vadScore = data.vad_score_event?.vad_score;
-        if (vadScore > 0.8) {
-          console.log('🎙️ VAD Score:', vadScore.toFixed(2));
-        }
-        break;
-        
-      case 'ping':
-        const eventId = data.ping_event?.event_id;
-        if (eventId && wsRef.current) {
-          wsRef.current.send(JSON.stringify({ type: 'pong', event_id: eventId }));
-        }
-        break;
-        
-      default:
-        console.log('📨 Received message type:', messageType);
-    }
-  };
-
-  const addTranscript = (speaker, text) => {
-    setTranscripts(prev => [...prev, { speaker, text, timestamp: new Date() }]);
-  };
-
-  const updateOrAddUserTranscript = (text, isInterim) => {
-    setTranscripts(prev => {
-      const lastTranscript = prev[prev.length - 1];
-      
-      if (lastTranscript && lastTranscript.speaker === 'user' && lastTranscript.isInterim) {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          speaker: 'user',
-          text,
-          timestamp: lastTranscript.timestamp,
-          isInterim
-        };
-        return updated;
-      }
-      
-      return [...prev, { speaker: 'user', text, timestamp: new Date(), isInterim }];
-    });
-  };
-
-
-  const cleanTranscriptText = (text) => {
-    // Remove tool_code blocks and other unwanted content
-    return text
-      .replace(/```tool_code[\s\S]*?```/g, '') // Remove tool_code blocks
-      .replace(/```[\s\S]*?```/g, '') // Remove any other code blocks
-      .replace(/^\s*\n/gm, '') // Remove empty lines
-      .trim();
-  };
-
-  const checkForAisleMention = (text) => {
-    console.log('🔍 checkForAisleMention called with:', text);
-    console.log('🔍 Raw text received:', text);
-    // Clean the text first to remove any unwanted content
-    const cleanText = cleanTranscriptText(text);
-    console.log('🔍 Cleaned text:', cleanText);
-    
-    // Regular expression to match aisle patterns like A5, K10, S3, etc.
-    // Also handle "A two", "F eight" format and "Aisle J four" format
-    const aislePattern = /\b([A-Z]\d{1,2})\b/g;
-    const wordPattern = /\b([A-Z])\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen)\b/gi;
-    const aisleWordPattern = /[Aa]isle\s+([A-Z])\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen)/gi;
-    const aisleNumberPattern = /[Aa]isle\s+([A-Z])\s*(\d{1,2})/gi;
-    
-    const matches = cleanText.match(aislePattern);
-    const wordMatches = cleanText.match(wordPattern);
-    const aisleWordMatches = cleanText.match(aisleWordPattern);
-    const aisleNumberMatches = cleanText.match(aisleNumberPattern);
-    
-    console.log('🔍 Checking text for aisles:', cleanText);
-    console.log('🔍 Pattern matches:', matches);
-    console.log('🔍 Word pattern matches:', wordMatches);
-    console.log('🔍 Aisle word pattern matches:', aisleWordMatches);
-    console.log('🔍 Aisle number pattern matches:', aisleNumberMatches);
-    
-    // Debug: Test with the actual agent response format
-    const agentText = "Oatmeal Quick Oats, which are quick cooking oats in a canister, can be found in Aisle J four. We also have Oatmeal Old Fashioned, which are old fashioned rolled oats, also in Aisle J four. For Steel Cut Oats, which are Irish steel cut oats, you'll find them in Aisle G six. Lastly, Granola Bars Oats Honey, which are chewy oats and honey bars in a ten count pack, are located in Aisle H six.";
-    const agentMatches = agentText.match(aisleWordPattern);
-    console.log('🧪 Agent text test:', agentText);
-    console.log('🧪 Agent matches:', agentMatches);
-    
-    // Test the conversion logic
-    if (agentMatches) {
-      const testConverted = agentMatches.map(match => {
-        const parts = match.split(' ');
-        const letter = parts[1];
-        const word = parts[2];
-        const wordToNum = {
-          'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
-          'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10',
-          'eleven': '11', 'twelve': '12', 'thirteen': '13', 'fourteen': '14',
-          'fifteen': '15', 'sixteen': '16', 'seventeen': '17'
-        };
-        return letter.toUpperCase() + wordToNum[word.toLowerCase()];
-      });
-      console.log('🧪 Test conversion result:', testConverted);
-    }
-    
-    let allMatches = [];
-    if (matches) allMatches = [...allMatches, ...matches];
-    if (wordMatches) {
-      // Convert word format to letter format
-      const converted = wordMatches.map(match => {
-        const [letter, word] = match.split(' ');
-        const wordToNum = {
-          'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
-          'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10',
-          'eleven': '11', 'twelve': '12', 'thirteen': '13', 'fourteen': '14',
-          'fifteen': '15', 'sixteen': '16', 'seventeen': '17'
-        };
-        return letter.toUpperCase() + wordToNum[word.toLowerCase()];
-      });
-      allMatches = [...allMatches, ...converted];
-    }
-    if (aisleWordMatches) {
-      // Convert "Aisle J four" format to "J4"
-      const converted = aisleWordMatches.map(match => {
-        const parts = match.split(' ');
-        const letter = parts[1]; // J
-        const word = parts[2]; // four
-        const wordToNum = {
-          'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
-          'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10',
-          'eleven': '11', 'twelve': '12', 'thirteen': '13', 'fourteen': '14',
-          'fifteen': '15', 'sixteen': '16', 'seventeen': '17'
-        };
-        return letter.toUpperCase() + wordToNum[word.toLowerCase()];
-      });
-      allMatches = [...allMatches, ...converted];
-    }
-    if (aisleNumberMatches) {
-      // Convert "Aisle J4" format to "J4"
-      const converted = aisleNumberMatches.map(match => {
-        const parts = match.split(/\s+/);
-        const letter = parts[1]; // J
-        const number = parts[2]; // 4
-        return letter.toUpperCase() + number;
-      });
-      allMatches = [...allMatches, ...converted];
-    }
-    
-    // Remove duplicates
-    allMatches = [...new Set(allMatches)];
-    
-    if (allMatches.length > 0) {
-      console.log('🗺️ Aisle mentioned:', allMatches);
-      console.log('🗺️ Setting showMap to true');
-      setShowMap(true);
-      setPendingAisles(allMatches);
-      setUserFinishedSpeaking(false); // Reset the speaking state when map is shown
-      
-      // Don't hide the map immediately when agent mentions aisles
-      // The map should stay visible to show the pins
-    } else {
-      console.log('🗺️ No aisle matches found in text');
-    }
-  };
-
-  const handleMapControls = useCallback((controls) => {
-    setMapControls(controls);
   }, []);
 
-  // Handle pending aisles when map controls are available
-  useEffect(() => {
-    if (mapControls && pendingAisles.length > 0) {
-      console.log('🗺️ Adding pins for pending aisles:', pendingAisles);
-      console.log('🗺️ Map controls available:', !!mapControls);
-      pendingAisles.forEach(aisle => {
-        console.log('🗺️ Adding pin for aisle:', aisle);
-        mapControls.addPin(aisle, '#ef4444'); // Red pin for store locations (mentioned aisles)
-      });
-      setPendingAisles([]); // Clear pending aisles
-    }
-  }, [mapControls, pendingAisles]);
+  const addTranscript = useCallback((speaker, text, extra = {}) => {
+    nextId.current += 1;
+    const item = { id: nextId.current, speaker, text, timestamp: new Date(), ...extra };
+    setTranscripts((prev) => [...prev.filter((t) => !t.isInterim), item]);
+  }, []);
 
-  // Hide map when user finishes speaking (but not when agent is responding with aisles)
-  useEffect(() => {
-    if (userFinishedSpeaking && showMap && pendingAisles.length === 0) {
-      console.log('🗺️ User finished speaking, hiding map');
-      setTimeout(() => {
-        setShowMap(false);
-        setPendingAisles([]); // Clear any pending aisles
-      }, 500); // Give a bit more time for the user to see their question was processed
-    }
-  }, [userFinishedSpeaking, showMap, pendingAisles]);
-
-  const toggleMap = () => {
-    setShowMap(!showMap);
-    setUserFinishedSpeaking(false); // Reset speaking state when manually toggling
-  };
-
-  const stopAudioPlayback = () => {
-    console.log('🛑 Clearing audio queue and stopping playback');
-    
-    // Stop the currently playing audio source
-    if (currentAudioSourceRef.current) {
-      try {
-        currentAudioSourceRef.current.stop();
-        currentAudioSourceRef.current.disconnect();
-        console.log('⏹️ Stopped current audio source');
-      } catch (error) {
-        // Source might already be stopped, that's okay
-        console.log('⚠️ Audio source already stopped');
-      }
-      currentAudioSourceRef.current = null;
-    }
-    
-    // Clear the queue and stop playback loop
-    audioQueueRef.current = [];
-    isPlayingRef.current = false;
-    setIsSpeaking(false);
-  };
-
-  const queueAudio = (audioBase64) => {
-    audioQueueRef.current.push(audioBase64);
-    if (!isPlayingRef.current) {
-      isPlayingRef.current = true;
-      playNextAudio();
-    }
-  };
-
-  const playNextAudio = async () => {
-    if (audioQueueRef.current.length === 0 || !isPlayingRef.current) {
-      isPlayingRef.current = false;
-      setIsSpeaking(false);
-      console.log('✅ Audio playback finished');
-      return;
-    }
-    
-    const audioBase64 = audioQueueRef.current.shift();
-    
-    try {
-      if (!playbackContextRef.current || playbackContextRef.current.state === 'closed') {
-        playbackContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
-          sampleRate: 16000
-        });
-        console.log('🔊 Created new audio context');
-      }
-      
-      if (playbackContextRef.current.state === 'suspended') {
-        await playbackContextRef.current.resume();
-        console.log('▶️ Resumed audio context');
-      }
-      
-      const binaryString = atob(audioBase64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
-      const int16Array = new Int16Array(bytes.buffer);
-      const float32Array = new Float32Array(int16Array.length);
-      for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] / 32768.0;
-      }
-      
-      const audioBuffer = playbackContextRef.current.createBuffer(
-        1,
-        float32Array.length,
-        16000
-      );
-      audioBuffer.getChannelData(0).set(float32Array);
-      
-      const source = playbackContextRef.current.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(playbackContextRef.current.destination);
-      
-      // Store reference to current source so we can stop it if interrupted
-      currentAudioSourceRef.current = source;
-      
-      source.onended = () => {
-        // Clear the reference when this source finishes naturally
-        if (currentAudioSourceRef.current === source) {
-          currentAudioSourceRef.current = null;
-        }
-        
-        // Continue to next chunk if still playing
-        if (isPlayingRef.current) {
-          playNextAudio();
-        }
-      };
-      
-      setIsSpeaking(true);
-      source.start(0);
-      console.log('▶️ Playing audio chunk');
-    } catch (error) {
-      console.error('❌ Error playing audio:', error);
-      if (isPlayingRef.current) {
-        playNextAudio();
-      }
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      console.log('🎤 Requesting microphone access...');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          channelCount: 1,
-          sampleRate: 16000,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      
-      console.log('✅ Microphone access granted');
-      
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
-          sampleRate: 16000
-        });
-      }
-      
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      const processor = audioContextRef.current.createScriptProcessor(2048, 1, 1);
-      
-      processor.onaudioprocess = (e) => {
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-          const inputData = e.inputBuffer.getChannelData(0);
-          
-          // Convert Float32 to PCM16 and send to backend
-          const pcmData = new Int16Array(inputData.length);
-          
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]));
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-          }
-          
-          const uint8Array = new Uint8Array(pcmData.buffer);
-          let binary = '';
-          for (let i = 0; i < uint8Array.length; i++) {
-            binary += String.fromCharCode(uint8Array[i]);
-          }
-          const base64Audio = btoa(binary);
-          
-          wsRef.current.send(JSON.stringify({ user_audio_chunk: base64Audio }));
-        }
-      };
-      
-      source.connect(processor);
-      processor.connect(audioContextRef.current.destination);
-      
-      mediaRecorderRef.current = { processor, source, stream };
-      setIsRecording(true);
-      console.log('🎙️ Recording started, sending audio chunks...');
-    } catch (error) {
-      console.error('❌ Error accessing microphone:', error);
-      alert('Could not access microphone. Please check permissions and ensure you are using HTTPS or localhost.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      try {
-        if (mediaRecorderRef.current.processor) {
-          mediaRecorderRef.current.processor.disconnect();
-          mediaRecorderRef.current.source.disconnect();
-        }
-        if (mediaRecorderRef.current.stream) {
-          mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        }
-        console.log('⏹️ Recording stopped');
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-      }
-      mediaRecorderRef.current = null;
-    }
-    setIsRecording(false);
-  };
-
-  const disconnect = () => {
-    stopAudioPlayback(); // Stop audio first
-    stopRecording();
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
-    // Clear conversation history and reset state
-    setTranscripts([{ speaker: 'system', text: 'Conversation ended. History cleared.', timestamp: new Date() }]);
-    setShowMap(false);
-    setPendingAisles([]);
-    setUserFinishedSpeaking(false);
-  };
-
-  const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
-
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
+  const setInterim = useCallback((text) => {
+    setTranscripts((prev) => {
+      const rest = prev.filter((t) => !t.isInterim);
+      if (!text) return rest;
+      return [...rest, { id: 'interim', speaker: 'user', text, timestamp: new Date(), isInterim: true }];
     });
+  }, []);
+
+  const handleQuery = useCallback(
+    async (rawText) => {
+      const text = rawText.trim();
+      if (!text) return;
+      addTranscript('user', text);
+      setBusy(true);
+      try {
+        const catalog = await loadCatalog();
+        let results;
+        if (keys.openai) {
+          try {
+            if (!isCatalogIndexed()) {
+              addTranscript('system', 'Indexing the 1,000-product catalog with your OpenAI key (one time, about 15k tokens)...');
+            }
+            results = await semanticSearch(keys.openai, catalog, text);
+            if (!results.length) results = keywordSearch(catalog, text);
+          } catch (err) {
+            addTranscript('system', `${err.message.replace(/\.$/, '')}. Falling back to keyword search.`);
+            results = keywordSearch(catalog, text);
+          }
+        } else {
+          results = keywordSearch(catalog, text);
+        }
+        const answer = answerFor(text, results);
+        addTranscript('agent', answer.text, { products: results.map((r) => r.item) });
+        if (answer.aisles.length) {
+          setHighlights(answer.aisles);
+          setShowMap(true);
+        }
+        setBusy(false);
+        if (speakAnswers) {
+          setIsSpeaking(true);
+          const voiceError = await speak(answer.text, keys.elevenlabs);
+          setIsSpeaking(false);
+          if (voiceError) addTranscript('system', voiceError);
+        }
+      } catch (err) {
+        addTranscript('system', err.message || 'Something went wrong.');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [keys, speakAnswers, addTranscript]
+  );
+
+  const submit = (e) => {
+    e.preventDefault();
+    const text = input;
+    setInput('');
+    handleQuery(text);
   };
+
+  const startListening = () => {
+    if (!SpeechRecognition) return;
+    stopSpeaking();
+    setIsSpeaking(false);
+    const rec = new SpeechRecognition();
+    rec.lang = 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.onresult = (event) => {
+      let finalText = '';
+      let interimText = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const r = event.results[i];
+        if (r.isFinal) finalText += r[0].transcript;
+        else interimText += r[0].transcript;
+      }
+      if (finalText) {
+        setInterim('');
+        handleQuery(finalText);
+      } else {
+        setInterim(interimText);
+      }
+    };
+    rec.onerror = (event) => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        addTranscript('system', 'Microphone access was blocked. Allow it in your browser, or type your question.');
+      } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        addTranscript('system', `Speech recognition error: ${event.error}. You can type your question instead.`);
+      }
+    };
+    rec.onend = () => {
+      setIsListening(false);
+      setInterim('');
+      recognitionRef.current = null;
+    };
+    recognitionRef.current = rec;
+    setIsListening(true);
+    rec.start();
+  };
+
+  const toggleListening = () => {
+    if (isListening) recognitionRef.current?.stop();
+    else startListening();
+  };
+
+  const clearConversation = () => {
+    recognitionRef.current?.abort();
+    stopSpeaking();
+    setIsSpeaking(false);
+    setTranscripts([]);
+    setHighlights([]);
+  };
+
+  const formatTime = (date) =>
+    date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  const searchMode = keys.openai ? 'Semantic search (OpenAI)' : 'Keyword search';
+  const voiceMode = keys.elevenlabs ? 'ElevenLabs voice' : 'Browser voice';
 
   return (
     <div className="app">
-      {/* Background gradients */}
       <div className="gradient-bg-top-left"></div>
       <div className="gradient-bg-bottom-right"></div>
       <div className="gradient-bg-center"></div>
       <div className="grid-pattern"></div>
 
-      {/* Global Hamburger Menu - positioned at very right of entire window */}
-      <button 
+      <button
         className="global-settings-button"
         onClick={() => setShowDashboard(true)}
-        title="Open Settings"
+        title="Store dashboard"
+        aria-label="Open store dashboard"
       >
         <div className="hamburger-menu">
           <span></span>
@@ -574,7 +196,6 @@ function App() {
       </button>
 
       <div className="container">
-        {/* Chat Section - Left 2/3 */}
         <div className="chat-section">
           <header className="header">
             <div className="logo-container">
@@ -597,41 +218,53 @@ function App() {
               </div>
               <h1 className="title">StorePal</h1>
             </div>
-            
+
             <div className="status-bar">
-              <div className={`status-indicator ${connectionStatus}`}>
+              <div className={`status-indicator ${keys.openai ? 'connected' : ''}`}>
                 <div className="status-dot"></div>
-                <span>{connectionStatus}</span>
+                <span>{searchMode}</span>
               </div>
-              {isRecording && (
-                <div className="status-indicator" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626' }}>
-                  <div className="pulse" style={{ background: '#ef4444' }}></div>
-                  <span>Recording</span>
-                </div>
-              )}
+              <div className={`status-indicator ${keys.elevenlabs ? 'connected' : ''}`}>
+                <div className="status-dot"></div>
+                <span>{voiceMode}</span>
+              </div>
+              <button className="keys-button" onClick={() => setShowKeys(true)}>
+                🔑 {keys.openai || keys.elevenlabs ? 'Keys added' : 'Add keys (optional)'}
+              </button>
             </div>
           </header>
 
           <div className="transcript-container">
             {transcripts.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">💬</div>
-                <p>Connect and start speaking to begin your conversation with StorePal AI</p>
+                <div className="empty-icon">🛒</div>
+                <p>
+                  Ask where something is in WinMart. Type below or tap the mic, and StorePal
+                  answers and pins the aisle on the map.
+                </p>
+                <div className="example-chips">
+                  {EXAMPLES.map((ex) => (
+                    <button key={ex} className="example-chip" onClick={() => handleQuery(ex)}>
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="transcript-list">
-                {transcripts.map((item, index) => (
-                  <div key={index} className={`transcript-item ${item.speaker} ${item.isInterim ? 'interim' : ''}`}>
+                {transcripts.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`transcript-item ${item.speaker} ${item.isInterim ? 'interim' : ''}`}
+                  >
                     <div className="transcript-header">
                       <span className="speaker-label">
-                        {item.speaker === 'user' ? '👤 You' : 
-                         item.speaker === 'agent' ? '🤖 AI' : 
-                         '⚙️ System'}
-                        {item.isInterim && <span className="interim-badge"> (speaking...)</span>}
+                        {item.speaker === 'user' ? '👤 You' : item.speaker === 'agent' ? '🤖 StorePal' : '⚙️ System'}
+                        {item.isInterim && <span className="interim-badge"> (listening...)</span>}
                       </span>
                       <span className="timestamp">{formatTime(item.timestamp)}</span>
                     </div>
-                    <div className="transcript-text">{cleanTranscriptText(item.text)}</div>
+                    <div className="transcript-text">{item.text}</div>
                   </div>
                 ))}
                 <div ref={transcriptEndRef} />
@@ -639,59 +272,72 @@ function App() {
             )}
           </div>
 
-          {/* Store Map - Show in chat area when needed */}
           {showMap && (
             <div className="map-in-chat">
-              <StoreMap 
-                showMap={showMap} 
-                onAislePin={handleMapControls}
-              />
+              <StoreMap highlights={highlights} onClear={() => setHighlights([])} />
             </div>
           )}
 
+          <form className="ask-form" onSubmit={submit}>
+            <input
+              className="ask-input"
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Where can I find..."
+              aria-label="Ask StorePal where a product is"
+            />
+            <button className="control-btn ask-btn" type="submit" disabled={busy || !input.trim()}>
+              Ask
+            </button>
+          </form>
+
           <div className="controls">
-            {!isConnected ? (
-              <button 
-                className="control-btn connect-btn" 
-                onClick={connectWebSocket}
-                disabled={connectionStatus === 'connecting'}
+            {SpeechRecognition ? (
+              <button
+                className={`control-btn mic-btn ${isListening ? 'recording' : ''}`}
+                onClick={toggleListening}
               >
-                {connectionStatus === 'connecting' ? 'Connecting...' : 'Connect'}
+                <span className="btn-icon">🎙️</span>
+                <span>{isListening ? 'Stop' : 'Speak'}</span>
               </button>
             ) : (
-              <>
-                <button 
-                  className={`control-btn mic-btn ${isRecording ? 'recording' : ''}`}
-                  onClick={toggleRecording}
-                >
-                  <span className="btn-icon">{isRecording ? '🎤' : '🎙️'}</span>
-                  <span>{isRecording ? 'Stop' : 'Start'}</span>
-                </button>
-                <button 
-                  className={`control-btn map-btn ${showMap ? 'active' : ''}`}
-                  onClick={toggleMap}
-                >
-                  <span className="btn-icon">🗺️</span>
-                  <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
-                </button>
-                <button 
-                  className="control-btn disconnect-btn" 
-                  onClick={disconnect}
-                >
-                  Disconnect
-                </button>
-              </>
+              <span className="no-mic-note">Voice input needs Chrome, Edge or Safari. Typing works everywhere.</span>
+            )}
+            <button
+              className={`control-btn map-btn ${showMap ? 'active' : ''}`}
+              onClick={() => setShowMap((v) => !v)}
+            >
+              <span className="btn-icon">🗺️</span>
+              <span>{showMap ? 'Hide map' : 'Show map'}</span>
+            </button>
+            <button
+              className={`control-btn voice-toggle ${speakAnswers ? 'on' : ''}`}
+              onClick={() => {
+                if (speakAnswers) {
+                  stopSpeaking();
+                  setIsSpeaking(false);
+                }
+                setSpeakAnswers((v) => !v);
+              }}
+              title="Read answers out loud"
+            >
+              <span className="btn-icon">{speakAnswers ? '🔊' : '🔇'}</span>
+              <span>{speakAnswers ? 'Voice on' : 'Voice off'}</span>
+            </button>
+            {transcripts.length > 0 && (
+              <button className="control-btn disconnect-btn" onClick={clearConversation}>
+                Clear
+              </button>
             )}
           </div>
         </div>
 
-        {/* Animation Section - Right 1/3 */}
         <div className="animation-section">
           <div className="voice-animation">
             <div className="voice-orb-container">
-              <div className={`voice-orb ${isRecording ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
+              <div className={`voice-orb ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}>
                 <div className="siri-waves">
-                  {/* Generate 24 radial lines in all directions (every 15 degrees) */}
                   {Array.from({ length: 24 }).map((_, index) => (
                     <div key={index} className="siri-wave-line" style={{ '--angle': `${index * 15}deg`, '--index': index }}></div>
                   ))}
@@ -701,21 +347,17 @@ function App() {
                 <div className="galaxy-ring ring-3"></div>
               </div>
             </div>
-            {(isRecording || isSpeaking) && (
+            {(isListening || isSpeaking || busy) && (
               <div className="animation-status">
-                {isRecording && !isSpeaking ? '🎤 Listening...' : ''}
-                {isSpeaking ? '🔊 Speaking...' : ''}
+                {isListening ? '🎤 Listening...' : isSpeaking ? '🔊 Speaking...' : '🔎 Searching...'}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Dashboard */}
-      <Dashboard 
-        isOpen={showDashboard} 
-        onClose={() => setShowDashboard(false)} 
-      />
+      <Dashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} />
+      <KeyPanel isOpen={showKeys} onClose={() => setShowKeys(false)} keys={keys} onSave={setKeys} />
     </div>
   );
 }
