@@ -1,77 +1,41 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 
-const StoreMap = ({ showMap, onAislePin }) => {
+const YOU_ARE_HERE = 'N8';
+
+// Draws the WinMart floor plan and drops a pin on every aisle in `highlights`.
+const StoreMap = ({ highlights = [], onClear }) => {
   const svgRef = useRef(null);
   const [pins, setPins] = useState([]);
 
-  const addPin = useCallback((aisleId, color) => {
-    console.log('🗺️ addPin called:', aisleId, color);
-    if (!svgRef.current) {
-      console.log('🗺️ SVG ref not available, will retry');
-      // Retry after a short delay
-      setTimeout(() => {
-        if (svgRef.current) {
-          addPin(aisleId, color);
-        }
-      }, 100);
-      return;
-    }
-
-    const aisleElement = svgRef.current.getElementById(aisleId);
-    if (!aisleElement) {
-      console.log('🗺️ Aisle element not found:', aisleId);
-      return;
-    }
-
-    const bbox = aisleElement.getBBox();
-    const cx = bbox.x + bbox.width / 2;
-    const cy = bbox.y + bbox.height / 2;
-
-    const newPin = {
-      id: `${aisleId}-${Date.now()}`,
-      aisleId,
-      cx,
-      cy,
-      color
+  useLayoutEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    svg.querySelectorAll('.aisle-hit').forEach((el) => el.classList.remove('aisle-hit'));
+    const next = [];
+    const place = (aisleId, color) => {
+      const el = svg.getElementById(aisleId);
+      if (!el) return;
+      const bbox = el.getBBox();
+      next.push({ id: aisleId, cx: bbox.x + bbox.width / 2, cy: bbox.y + bbox.height / 2, color });
     };
-
-    setPins(prev => {
-      // Remove existing pin for this aisle
-      const filtered = prev.filter(pin => pin.aisleId !== aisleId);
-      return [...filtered, newPin];
+    place(YOU_ARE_HERE, '#22c55e');
+    highlights.forEach((aisleId) => {
+      const el = svg.getElementById(aisleId);
+      if (el) el.classList.add('aisle-hit');
+      place(aisleId, '#ef4444');
     });
-  }, []);
-
-  const clearPins = useCallback(() => {
-    setPins([]);
-  }, []);
-
-  useEffect(() => {
-    if (showMap && svgRef.current) {
-      console.log('🗺️ StoreMap mounted, adding customer location pin');
-      console.log('🗺️ SVG ref available:', !!svgRef.current);
-      // Add initial green pin at N8 to represent customer's current location
-      addPin('N8', '#22c55e');
-    }
-  }, [showMap, addPin]);
-
-  // Expose methods to parent component
-  useEffect(() => {
-    if (onAislePin) {
-      console.log('🗺️ Exposing map controls to parent');
-      onAislePin({ addPin, clearPins });
-    }
-  }, [onAislePin, addPin, clearPins]);
-
-  if (!showMap) return null;
+    setPins(next);
+  }, [highlights]);
 
   return (
     <div className="store-map-container" style={{ animation: 'mapSlideIn 0.4s ease-out' }}>
       <div className="map-header">
         <h2>WinMart Store Map</h2>
-        <button onClick={clearPins} className="clear-pins-btn">
-          Clear All Pins
-        </button>
+        {highlights.length > 0 && onClear && (
+          <button onClick={onClear} className="clear-pins-btn">
+            Clear pins
+          </button>
+        )}
       </div>
       
       <div className="map-wrapper">
@@ -105,6 +69,7 @@ const StoreMap = ({ showMap, onAislePin }) => {
               .section-label { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 700; fill: #4b5563; text-anchor: middle; }
               .feature-label { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: #374151; text-anchor: middle; }
               .department-label { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; fill: #6b7280; text-anchor: middle; }
+              .aisle-hit { fill: #fecaca; stroke: #ef4444; stroke-width: 3; }
             `}
           </style>
           
@@ -632,7 +597,7 @@ const StoreMap = ({ showMap, onAislePin }) => {
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#ef4444' }}></div>
-          <span>Store locations</span>
+          <span>Product aisle</span>
         </div>
       </div>
     </div>

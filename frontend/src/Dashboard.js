@@ -1,83 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Dashboard.css';
+import { loadCatalog } from './search';
 
+const naturalAisleSort = (a, b) =>
+  a[0] === b[0] ? parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10) : a.localeCompare(b);
+
+// Read-only view of the WinMart catalog, loaded from public/inventory.json.
 const Dashboard = ({ isOpen, onClose }) => {
   const [activeView, setActiveView] = useState('dashboard');
   const [inventory, setInventory] = useState([]);
-  const [aisles, setAisles] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
+  const [error, setError] = useState('');
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      fetchInventoryData();
-      fetchAislesAndCategories();
-    }
-  }, [isOpen]);
-
-  const fetchInventoryData = async () => {
+    if (!isOpen || inventory.length) return;
     setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8000/api/inventory');
-      if (response.ok) {
-        const data = await response.json();
-        setInventory(data);
-      }
-    } catch (error) {
-      console.error('Error fetching inventory:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadCatalog()
+      .then(setInventory)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [isOpen, inventory.length]);
 
-  const fetchAislesAndCategories = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/aisles-categories');
-      if (response.ok) {
-        const data = await response.json();
-        setAisles(data.aisles || []);
-        setCategories(data.categories || []);
-      }
-    } catch (error) {
-      console.error('Error fetching aisles and categories:', error);
-    }
-  };
-
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (!file.name.endsWith('.svg')) {
-      setUploadStatus('Please select an SVG file');
-      return;
-    }
-
-    setLoading(true);
-    setUploadStatus('Uploading...');
-
-    try {
-      const formData = new FormData();
-      formData.append('map', file);
-
-      const response = await fetch('http://localhost:8000/api/upload-map', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        setUploadStatus('Map uploaded successfully!');
-        // Refresh the map or show success message
-      } else {
-        setUploadStatus('Upload failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('Upload failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const aisles = useMemo(
+    () => [...new Set(inventory.map((i) => i.aisle))].sort(naturalAisleSort),
+    [inventory]
+  );
+  const categories = useMemo(
+    () => [...new Set(inventory.map((i) => i.category))].sort(),
+    [inventory]
+  );
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return inventory;
+    return inventory.filter((i) =>
+      `${i.name} ${i.category} ${i.aisle} ${i.description}`.toLowerCase().includes(q)
+    );
+  }, [inventory, filter]);
 
   const renderDashboard = () => (
     <div className="dashboard-overview">
@@ -120,15 +79,19 @@ const Dashboard = ({ isOpen, onClose }) => {
       <div className="database-header">
         <h2>Product Database</h2>
         <div className="search-bar">
-          <input 
-            type="text" 
-            placeholder="Search products..." 
+          <input
+            type="text"
+            placeholder="Filter products..."
             className="search-input"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
           />
         </div>
       </div>
       
-      {loading ? (
+      {error ? (
+        <div className="loading">{error}</div>
+      ) : loading ? (
         <div className="loading">Loading inventory...</div>
       ) : (
         <div className="inventory-table">
@@ -139,11 +102,11 @@ const Dashboard = ({ isOpen, onClose }) => {
             <div className="col-description">Description</div>
           </div>
           <div className="table-body">
-            {inventory.map((item, index) => (
-              <div key={index} className="table-row">
-                <div className="col-name">{item.item_name}</div>
+            {filtered.map((item) => (
+              <div key={item.id} className="table-row">
+                <div className="col-name">{item.name}</div>
                 <div className="col-category">{item.category}</div>
-                <div className="col-aisle">{item.aisle_location}</div>
+                <div className="col-aisle">{item.aisle}</div>
                 <div className="col-description">{item.description}</div>
               </div>
             ))}
@@ -188,34 +151,6 @@ const Dashboard = ({ isOpen, onClose }) => {
     </div>
   );
 
-  const renderUploadMap = () => (
-    <div className="upload-map">
-      <h2>Upload New Store Map</h2>
-      <div className="upload-area">
-        <div className="upload-box">
-          <div className="upload-icon">🗺️</div>
-          <h3>Upload SVG Map</h3>
-          <p>Select an SVG file to replace the current store map</p>
-          <input
-            type="file"
-            accept=".svg"
-            onChange={handleFileUpload}
-            className="file-input"
-            id="map-upload"
-          />
-          <label htmlFor="map-upload" className="upload-button">
-            Choose File
-          </label>
-          {uploadStatus && (
-            <div className={`upload-status ${uploadStatus.includes('success') ? 'success' : 'error'}`}>
-              {uploadStatus}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
@@ -224,8 +159,6 @@ const Dashboard = ({ isOpen, onClose }) => {
         return renderProductDatabase();
       case 'aisles':
         return renderAislesCategories();
-      case 'upload':
-        return renderUploadMap();
       default:
         return renderDashboard();
     }
@@ -269,13 +202,6 @@ const Dashboard = ({ isOpen, onClose }) => {
               >
                 <span className="nav-icon">🏪</span>
                 <span className="nav-text">Aisles & Categories</span>
-              </button>
-              <button 
-                className={`nav-item ${activeView === 'upload' ? 'active' : ''}`}
-                onClick={() => setActiveView('upload')}
-              >
-                <span className="nav-icon">🗺️</span>
-                <span className="nav-text">Upload Map</span>
               </button>
             </nav>
           </div>

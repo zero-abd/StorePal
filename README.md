@@ -2,6 +2,8 @@
 
 **Built for HackUTA 2025** 🎓
 
+**Live demo: https://storepal-app.vercel.app**
+
 A comprehensive AI-powered shopping assistant that combines voice interaction, interactive store mapping, and intelligent product search to revolutionize the in-store shopping experience. Built with ElevenLabs ConvAI API, Pinecone Vector Database, FastAPI, and React.
 
 ## 🎯 Problem Statement
@@ -56,6 +58,23 @@ Simply walk up to a kiosk, ask "Where can I find organic almond milk?" and get b
 <img width="1698" height="977" alt="map_page" src="https://github.com/user-attachments/assets/9a78d8d4-77fe-4631-9a9b-d994ecb54e7e" />
 
 
+
+## 🌐 Hosted version (live demo)
+
+The live demo at **https://storepal-app.vercel.app** runs the core flow with no server of its own: ask for a product by voice or text, StorePal says which aisle it's in, and the aisle is pinned on the store map.
+
+- **Works with no keys.** The 1,000-product WinMart catalog ships as `frontend/public/inventory.json`, and search runs in the browser (keyword ranking with IDF weighting). Voice input uses the browser's speech recognition (Chrome, Edge, Safari) and answers are read out with the browser's own text-to-speech.
+- **Optional keys (bring your own).** An OpenAI key turns on semantic search: the catalog is embedded once with `text-embedding-3-small` and each question is matched by cosine similarity. An ElevenLabs key reads answers in an ElevenLabs voice. Keys live only in the page's memory and go out only with your own requests: OpenAI calls pass through the stateless `frontend/api/embeddings.js` route (OpenAI's error responses lack CORS headers), and ElevenLabs is called directly from the browser. Nothing is logged or stored.
+- **What changed from the hackathon build.** The original needed a local FastAPI server that proxied a WebSocket to an ElevenLabs ConvAI agent and queried a Pinecone index. Visitors can't bring their own ConvAI agent or Pinecone index, so the hosted version does the search in the browser instead. The original backend is still in `backend/` for reference, and the original frontend is at commit `cfff84d`.
+
+Run the hosted version locally:
+
+```bash
+cd frontend
+npm install
+npm start          # keyword search, map and browser voice work right away
+# semantic search needs the /api route: run `vercel dev` from the repo root instead
+```
 
 ## 🏗️ Technical Architecture & Design Decisions
 
@@ -184,7 +203,9 @@ AI responds: "I found milk in the dairy section, aisle 7. Let me show you on the
 - **ElevenLabs API** account with API key and Agent ID ([Get Started](https://elevenlabs.io))
 - **Pinecone API** key for vector database ([Get Started](https://www.pinecone.io/))
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start Guide (original hackathon build)
+
+> These steps run the original FastAPI + ElevenLabs ConvAI + Pinecone version. The current `frontend/` no longer talks to the backend, so check out commit `cfff84d` first (`git checkout cfff84d`).
 
 ### Step 1: Clone and Navigate
 ```bash
